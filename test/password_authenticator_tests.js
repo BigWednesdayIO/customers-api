@@ -7,7 +7,7 @@ const authenticatePassword = require('../lib/password_authenticator');
 
 describe('Password authenticator', () => {
   describe('valid', () => {
-    let auth0;
+    let httpInterceptor;
     let authenticatePasswordResult;
 
     const mockAuthResponse = {
@@ -17,7 +17,7 @@ describe('Password authenticator', () => {
     };
 
     before(() => {
-      auth0 = nock(`https://${process.env.AUTH0_DOMAIN}`)
+      httpInterceptor = nock(`https://${process.env.AUTH0_DOMAIN}`)
                 .post('/oauth/ro', {
                   client_id: process.env.AUTHO_CLIENT_ID,
                   username: 'test@bigwednesday.io',
@@ -34,8 +34,12 @@ describe('Password authenticator', () => {
         });
     });
 
+    after(() => {
+      nock.cleanAll();
+    });
+
     it('authenticates with Auth0', () => {
-      expect(auth0.isDone()).to.equal(true);
+      expect(httpInterceptor.isDone()).to.equal(true);
     });
 
     it('returns jwt', () => {
@@ -58,6 +62,10 @@ describe('Password authenticator', () => {
           error: 'invalid_user_password',
           error_description: 'Wrong email or password.'
         });
+    });
+
+    after(() => {
+      nock.cleanAll();
     });
 
     it('authenticates with Auth0', () => {
