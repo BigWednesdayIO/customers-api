@@ -3,6 +3,9 @@
     "mocha": true
   },
   "rules": {
-    "max-nested-callbacks": [1, 8]
+    "max-nested-callbacks": [1, 8],
+    "no-unused-expressions": 0,
+    "prefer-reflect": 0,
+    "prefer-spread": 0,
   }
 }
