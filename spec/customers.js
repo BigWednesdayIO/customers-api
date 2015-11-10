@@ -2,6 +2,7 @@
 
 const expect = require('chai').expect;
 const cuid = require('cuid');
+const jsonwebtoken = require('jsonwebtoken');
 const specRequest = require('./spec_request');
 const auth0Client = require('../lib/auth0_client');
 
@@ -47,6 +48,19 @@ describe('/customers', () => {
 
       it('has id', () => {
         expect(createUserResponse.result.id).to.equal(createUserResponse.result.id);
+      });
+
+      it('has token', () => {
+        const token = jsonwebtoken.verify(
+          createUserResponse.result.token,
+          new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'),
+          {
+            algorithms: ['HS256'],
+            audience: process.env.AUTHO_CLIENT_ID,
+            issuer: `https://${process.env.AUTH0_DOMAIN}/`
+          });
+
+        expect(token.sub).to.equal(createUserResponse.result.id);
       });
 
       it('returns http 400 when user exists', () => {
