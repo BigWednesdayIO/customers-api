@@ -71,7 +71,7 @@ describe('/customers', () => {
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
-          expect(response.result.message).to.equal('Invalid signup.');
+          expect(response.result.message).to.equal('Email address already in use or invalid password.');
         });
       });
     });
