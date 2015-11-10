@@ -28,7 +28,11 @@ module.exports = function (grunt) {
     },
     env: {
       test: {
-        RESPONSE_FAIL_ACTION: 'error'
+        RESPONSE_FAIL_ACTION: 'error',
+        AUTH0_DOMAIN: 'bigwednesday-io.eu.auth0.com',
+        AUTHO_CLIENT_ID: 'Jw1aCZI3xZrXzouw7HMkB5wEczIzzdSO',
+        AUTH0_CLIENT_SECRET: 'w9PNqy0DIJ6-hguQTMtxIcXXofhofYYqbLWWEkqVVRX0_-V9ByTvafY-q8uX-TuC',
+        AUTH0_CONNECTION: 'orderable-test-username-password'
       }
     },
     watch: {

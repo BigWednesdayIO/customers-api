@@ -1,20 +1,23 @@
 'use strict';
 
 const expect = require('chai').expect;
+const cuid = require('cuid');
 const specRequest = require('./spec_request');
+const auth0Client = require('../lib/auth0_client');
 
 describe('/customers', () => {
   describe('post', () => {
     describe('created customer', () => {
+      const testEmail = `${cuid()}@bigwednesday.io`;
       let createUserResponse;
 
-      beforeEach(() => {
+      before(() => {
         createUserResponse = undefined;
         return specRequest({
           url: '/customers',
           method: 'POST',
           payload: {
-            email: 'test@bigwednesday.io',
+            email: testEmail,
             password: '123456'
           }
         })
@@ -26,6 +29,10 @@ describe('/customers', () => {
         });
       });
 
+      after(done => {
+        auth0Client.deleteUser(createUserResponse.result.id, done);
+      });
+
       it('returns http 201', () => {
         expect(createUserResponse.statusCode).to.equal(201);
       });
@@ -35,11 +42,23 @@ describe('/customers', () => {
       });
 
       it('has email address', () => {
-        expect(createUserResponse.result.email).to.equal('test@bigwednesday.io');
+        expect(createUserResponse.result.email).to.equal(testEmail);
       });
 
       it('has id', () => {
         expect(createUserResponse.result.id).to.equal(createUserResponse.result.id);
+      });
+
+      it('returns http 400 when user exists', () => {
+        return specRequest({
+          url: '/customers',
+          method: 'POST',
+          payload: {email: testEmail, password: '123456'}
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result.message).to.equal('Email address already in use or invalid password.');
+        });
       });
     });
 
