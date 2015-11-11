@@ -17,7 +17,7 @@ describe('Customer DB', () => {
           auth0UserExistsError.code = 'user_exists';
           return callback(auth0UserExistsError);
         }
-        callback(null, {email: params.email, user_id: 'f870395e0f'});
+        callback(null, {email: params.email, bigwednesday_id: params.bigwednesday_id});
       });
     });
 
@@ -37,7 +37,8 @@ describe('Customer DB', () => {
     it('has id', () => {
       return customerDb.create({email: 'test@bigwednesday.io', password: '12345'})
         .then(customer => {
-          expect(customer.id).to.equal('f870395e0f');
+          expect(customer.id).to.match(/^c.*/);
+          expect(customer.id).to.have.length(25);
         });
     });
 

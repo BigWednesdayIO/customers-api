@@ -13,19 +13,24 @@ describe('/customers/authenticate', () => {
     let testCustomerId;
     let authResponse;
 
-    before(done => {
-      auth0Client.createUser({
-        connection: process.env.AUTH0_CONNECTION,
-        email: testEmail,
-        password: testPassword
-      }, (err, customer) => {
-        if (err) {
-          return done(err);
+    before(() => {
+      return specRequest({
+        url: '/customers',
+        method: 'POST',
+        payload: {
+          email: testEmail,
+          password: testPassword
+        }
+      })
+      .then(response => {
+        if (response.statusCode !== 201) {
+          return console.error(response.result);
         }
 
-        testCustomerId = customer.user_id;
-
-        specRequest({
+        testCustomerId = response.result.id;
+      })
+      .then(() => {
+        return specRequest({
           url: '/customers/authenticate',
           method: 'POST',
           payload: {
@@ -35,13 +40,13 @@ describe('/customers/authenticate', () => {
         })
         .then(response => {
           authResponse = response;
-          done();
-        }, done);
+        });
       });
     });
 
     after(done => {
-      auth0Client.deleteUser(testCustomerId, done);
+      const auth0UserId = jsonwebtoken.decode(authResponse.result.token).sub;
+      auth0Client.deleteUser(auth0UserId, done);
     });
 
     it('returns http 200', () => {
@@ -66,7 +71,7 @@ describe('/customers/authenticate', () => {
           issuer: `https://${process.env.AUTH0_DOMAIN}/`
         });
 
-      expect(token.sub).to.equal(authResponse.result.id);
+      expect(token.bigwednesday_id).to.equal(authResponse.result.id);
     });
 
     it('returns http 400 when user does not exist', () => {

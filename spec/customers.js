@@ -30,7 +30,8 @@ describe('/customers', () => {
     });
 
     after(done => {
-      auth0Client.deleteUser(createUserResponse.result.id, done);
+      const auth0UserId = jsonwebtoken.decode(createUserResponse.result.token).sub;
+      auth0Client.deleteUser(auth0UserId, done);
     });
 
     it('returns http 201', () => {
@@ -46,7 +47,8 @@ describe('/customers', () => {
     });
 
     it('returns id', () => {
-      expect(createUserResponse.result.id).to.be.ok;
+      expect(createUserResponse.result.id).to.match(/^c.*/);
+      expect(createUserResponse.result.id).to.have.length(25);
     });
 
     it('returns token', () => {
@@ -59,7 +61,7 @@ describe('/customers', () => {
           issuer: `https://${process.env.AUTH0_DOMAIN}/`
         });
 
-      expect(token.sub).to.equal(createUserResponse.result.id);
+      expect(token.bigwednesday_id).to.equal(createUserResponse.result.id);
     });
 
     it('returns http 400 when user exists', () => {

@@ -14,7 +14,7 @@ describe('Password authenticator', () => {
     let authenticatePasswordResult;
 
     const mockAuthResponse = {
-      id_token: jsonwebtoken.sign({}, new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'), {subject: '12345'})
+      id_token: jsonwebtoken.sign({bigwednesday_id: '12345'}, new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'))
     };
 
     before(() => {
@@ -25,7 +25,7 @@ describe('Password authenticator', () => {
                   password: testPassword,
                   connection: process.env.AUTH0_CONNECTION,
                   grant_type: 'password',
-                  scope: 'openid scope'
+                  scope: 'openid scope bigwednesday_id'
                 })
                 .reply(200, mockAuthResponse);
 
@@ -65,7 +65,7 @@ describe('Password authenticator', () => {
           password: 'password',
           connection: process.env.AUTH0_CONNECTION,
           grant_type: 'password',
-          scope: 'openid scope'
+          scope: 'openid scope bigwednesday_id'
         })
         .reply(401, {
           error: 'invalid_user_password',
