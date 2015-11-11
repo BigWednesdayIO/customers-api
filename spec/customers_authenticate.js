@@ -81,7 +81,7 @@ describe('/customers/authenticate', () => {
         payload: {email: `${cuid()}@bigwednesday.io`, password: '123456'}
       })
       .then(response => {
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).to.equal(401);
         expect(response.result.message).to.equal('Invalid email address or password.');
       });
     });
@@ -93,7 +93,7 @@ describe('/customers/authenticate', () => {
         payload: {email: testEmail, password: 'not-a-valid-password'}
       })
       .then(response => {
-        expect(response.statusCode).to.equal(400);
+        expect(response.statusCode).to.equal(401);
         expect(response.result.message).to.equal('Invalid email address or password.');
       });
     });
