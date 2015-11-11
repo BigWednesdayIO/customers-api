@@ -8,71 +8,69 @@ const auth0Client = require('../lib/auth0_client');
 
 describe('/customers', () => {
   describe('post', () => {
-    describe('created customer', () => {
-      const testEmail = `${cuid()}@bigwednesday.io`;
-      let createUserResponse;
+    const testEmail = `${cuid()}@bigwednesday.io`;
+    let createUserResponse;
 
-      before(() => {
-        createUserResponse = undefined;
-        return specRequest({
-          url: '/customers',
-          method: 'POST',
-          payload: {
-            email: testEmail,
-            password: '123456'
-          }
-        })
-        .then(response => {
-          if (response.statusCode !== 201) {
-            return console.error(response.result);
-          }
-          createUserResponse = response;
+    before(() => {
+      createUserResponse = undefined;
+      return specRequest({
+        url: '/customers',
+        method: 'POST',
+        payload: {
+          email: testEmail,
+          password: '123456'
+        }
+      })
+      .then(response => {
+        if (response.statusCode !== 201) {
+          return console.error(response.result);
+        }
+        createUserResponse = response;
+      });
+    });
+
+    after(done => {
+      auth0Client.deleteUser(createUserResponse.result.id, done);
+    });
+
+    it('returns http 201', () => {
+      expect(createUserResponse.statusCode).to.equal(201);
+    });
+
+    it('provides created resource location', () => {
+      expect(createUserResponse.headers.location).to.equal(`/customers/${createUserResponse.result.id}`);
+    });
+
+    it('returns email address', () => {
+      expect(createUserResponse.result.email).to.equal(testEmail);
+    });
+
+    it('returns id', () => {
+      expect(createUserResponse.result.id).to.equal(createUserResponse.result.id);
+    });
+
+    it('returns token', () => {
+      const token = jsonwebtoken.verify(
+        createUserResponse.result.token,
+        new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'),
+        {
+          algorithms: ['HS256'],
+          audience: process.env.AUTHO_CLIENT_ID,
+          issuer: `https://${process.env.AUTH0_DOMAIN}/`
         });
-      });
 
-      after(done => {
-        auth0Client.deleteUser(createUserResponse.result.id, done);
-      });
+      expect(token.sub).to.equal(createUserResponse.result.id);
+    });
 
-      it('returns http 201', () => {
-        expect(createUserResponse.statusCode).to.equal(201);
-      });
-
-      it('provides created resource location', () => {
-        expect(createUserResponse.headers.location).to.equal(`/customers/${createUserResponse.result.id}`);
-      });
-
-      it('has email address', () => {
-        expect(createUserResponse.result.email).to.equal(testEmail);
-      });
-
-      it('has id', () => {
-        expect(createUserResponse.result.id).to.equal(createUserResponse.result.id);
-      });
-
-      it('has token', () => {
-        const token = jsonwebtoken.verify(
-          createUserResponse.result.token,
-          new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'),
-          {
-            algorithms: ['HS256'],
-            audience: process.env.AUTHO_CLIENT_ID,
-            issuer: `https://${process.env.AUTH0_DOMAIN}/`
-          });
-
-        expect(token.sub).to.equal(createUserResponse.result.id);
-      });
-
-      it('returns http 400 when user exists', () => {
-        return specRequest({
-          url: '/customers',
-          method: 'POST',
-          payload: {email: testEmail, password: '123456'}
-        })
-        .then(response => {
-          expect(response.statusCode).to.equal(400);
-          expect(response.result.message).to.equal('Email address already in use or invalid password.');
-        });
+    it('returns http 400 when user exists', () => {
+      return specRequest({
+        url: '/customers',
+        method: 'POST',
+        payload: {email: testEmail, password: '123456'}
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(400);
+        expect(response.result.message).to.equal('Email address already in use or invalid password.');
       });
     });
 
