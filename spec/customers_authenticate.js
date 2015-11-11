@@ -6,52 +6,59 @@ const jsonwebtoken = require('jsonwebtoken');
 const specRequest = require('./spec_request');
 const auth0Client = require('../lib/auth0_client');
 
-describe('/customers', () => {
+describe('/customers/authenticate', () => {
   describe('post', () => {
     const testEmail = `${cuid()}@bigwednesday.io`;
-    let createUserResponse;
+    const testPassword = '123456';
+    let testCustomerId;
+    let authResponse;
 
-    before(() => {
-      createUserResponse = undefined;
-      return specRequest({
-        url: '/customers',
-        method: 'POST',
-        payload: {
-          email: testEmail,
-          password: '123456'
+    before(done => {
+      auth0Client.createUser({
+        connection: process.env.AUTH0_CONNECTION,
+        email: testEmail,
+        password: testPassword
+      }, (err, customer) => {
+        if (err) {
+          return done(err);
         }
-      })
-      .then(response => {
-        if (response.statusCode !== 201) {
-          return console.error(response.result);
-        }
-        createUserResponse = response;
+
+        testCustomerId = customer.user_id;
+
+        specRequest({
+          url: '/customers/authenticate',
+          method: 'POST',
+          payload: {
+            email: testEmail,
+            password: testPassword
+          }
+        })
+        .then(response => {
+          authResponse = response;
+          done();
+        }, done);
       });
     });
 
     after(done => {
-      auth0Client.deleteUser(createUserResponse.result.id, done);
+      auth0Client.deleteUser(testCustomerId, done);
     });
 
-    it('returns http 201', () => {
-      expect(createUserResponse.statusCode).to.equal(201);
-    });
-
-    it('provides created resource location', () => {
-      expect(createUserResponse.headers.location).to.equal(`/customers/${createUserResponse.result.id}`);
+    it('returns http 200', () => {
+      expect(authResponse.statusCode).to.equal(200);
     });
 
     it('returns email address', () => {
-      expect(createUserResponse.result.email).to.equal(testEmail);
+      expect(authResponse.result.email).to.equal(testEmail);
     });
 
     it('returns id', () => {
-      expect(createUserResponse.result.id).to.be.ok;
+      expect(authResponse.result.id).to.equal(testCustomerId);
     });
 
     it('returns token', () => {
       const token = jsonwebtoken.verify(
-        createUserResponse.result.token,
+        authResponse.result.token,
         new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'),
         {
           algorithms: ['HS256'],
@@ -59,25 +66,37 @@ describe('/customers', () => {
           issuer: `https://${process.env.AUTH0_DOMAIN}/`
         });
 
-      expect(token.sub).to.equal(createUserResponse.result.id);
+      expect(token.sub).to.equal(authResponse.result.id);
     });
 
-    it('returns http 400 when user exists', () => {
+    it('returns http 400 when user does not exist', () => {
       return specRequest({
-        url: '/customers',
+        url: '/customers/authenticate',
         method: 'POST',
-        payload: {email: testEmail, password: '123456'}
+        payload: {email: `${cuid()}@bigwednesday.io`, password: '123456'}
       })
       .then(response => {
         expect(response.statusCode).to.equal(400);
-        expect(response.result.message).to.equal('Email address already in use or invalid password.');
+        expect(response.result.message).to.equal('Invalid email address or password.');
+      });
+    });
+
+    it('returns http 400 when incorrect password', () => {
+      return specRequest({
+        url: '/customers/authenticate',
+        method: 'POST',
+        payload: {email: testEmail, password: 'not-a-valid-password'}
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(400);
+        expect(response.result.message).to.equal('Invalid email address or password.');
       });
     });
 
     describe('validation', () => {
       it('requires email address', () => {
         return specRequest({
-          url: '/customers',
+          url: '/customers/authenticate',
           method: 'POST',
           payload: {password: '12345'}
         })
@@ -89,7 +108,7 @@ describe('/customers', () => {
 
       it('validates email address format', () => {
         return specRequest({
-          url: '/customers',
+          url: '/customers/authenticate',
           method: 'POST',
           payload: {email: 'bigwednesday.io', password: '12345'}
         })
@@ -101,7 +120,7 @@ describe('/customers', () => {
 
       it('requires password', () => {
         return specRequest({
-          url: '/customers',
+          url: '/customers/authenticate',
           method: 'POST',
           payload: {email: 'test@bigwednesday.io'}
         })

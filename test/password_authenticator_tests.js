@@ -2,33 +2,34 @@
 
 const nock = require('nock');
 const expect = require('chai').expect;
+const jsonwebtoken = require('jsonwebtoken');
 
 const authenticatePassword = require('../lib/password_authenticator');
 
 describe('Password authenticator', () => {
   describe('valid', () => {
+    const testEmail = 'test@bigwednesday.io';
+    const testPassword = 'password';
     let httpInterceptor;
     let authenticatePasswordResult;
 
     const mockAuthResponse = {
-      id_token: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL2JpZ3dlZG5lc2RheS1pby5ldS5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NTY0MjBlMDZjMjNkMWFkMzM5MDU0MTc0IiwiYXVkIjoiSncxYUNaSTN4WnJYem91dzdITWtCNXdFY3pJenpkU08iLCJleHAiOjE0NDcyMDY3MjYsImlhdCI6MTQ0NzE3MDcyNn0.yIA7uTGtMZ7lxU0Y762TM3XZym96uZDANDBkU24eQFY',
-      access_token: 'lqzX26w1yjm6nRP5',
-      token_type: 'bearer'
+      id_token: jsonwebtoken.sign({}, new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'), {subject: '12345'})
     };
 
     before(() => {
       httpInterceptor = nock(`https://${process.env.AUTH0_DOMAIN}`)
                 .post('/oauth/ro', {
                   client_id: process.env.AUTHO_CLIENT_ID,
-                  username: 'test@bigwednesday.io',
-                  password: 'password',
+                  username: testEmail,
+                  password: testPassword,
                   connection: process.env.AUTH0_CONNECTION,
                   grant_type: 'password',
                   scope: 'openid scope'
                 })
                 .reply(200, mockAuthResponse);
 
-      return authenticatePassword('test@bigwednesday.io', 'password')
+      return authenticatePassword(testEmail, testPassword)
         .then(result => {
           authenticatePasswordResult = result;
         });
@@ -43,7 +44,15 @@ describe('Password authenticator', () => {
     });
 
     it('returns jwt', () => {
-      expect(authenticatePasswordResult).to.equal(mockAuthResponse.id_token);
+      expect(authenticatePasswordResult.token).to.equal(mockAuthResponse.id_token);
+    });
+
+    it('returns email', () => {
+      expect(authenticatePasswordResult.email).to.equal(testEmail);
+    });
+
+    it('returns id', () => {
+      expect(authenticatePasswordResult.id).to.equal('12345');
     });
   });
 
