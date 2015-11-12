@@ -30,7 +30,7 @@ describe('Customer DB', () => {
       createUserStub.restore();
     });
 
-    it('creates a user in auth0', () => {
+    it('creates user in auth0', () => {
       const createParams = {email: 'test@bigwednesday.io', password: '12345'};
       return customerDb.create(createParams)
         .then(() => {
@@ -39,11 +39,18 @@ describe('Customer DB', () => {
         });
     });
 
-    it('has id', () => {
+    it('returns id', () => {
       return customerDb.create({email: 'test@bigwednesday.io', password: '12345'})
         .then(customer => {
           expect(customer.id).to.match(/^c.*/);
           expect(customer.id).to.have.length(25);
+        });
+    });
+
+    it('returns email', () => {
+      return customerDb.create({email: 'test@bigwednesday.io', password: '12345'})
+        .then(customer => {
+          expect(customer.email).to.equal('test@bigwednesday.io');
         });
     });
 
