@@ -18,7 +18,7 @@ describe('/customers', () => {
         method: 'POST',
         payload: {
           email: testEmail,
-          password: '123456'
+          password: '8u{F0*W1l5'
         }
       })
       .then(response => {
@@ -68,7 +68,19 @@ describe('/customers', () => {
       return specRequest({
         url: '/customers',
         method: 'POST',
-        payload: {email: testEmail, password: '123456'}
+        payload: {email: testEmail, password: '8u{F0*W1l5'}
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(400);
+        expect(response.result.message).to.equal('Email address already in use or invalid password.');
+      });
+    });
+
+    it('returns http 400 for weak password', () => {
+      return specRequest({
+        url: '/customers',
+        method: 'POST',
+        payload: {email: testEmail, password: '1'}
       })
       .then(response => {
         expect(response.statusCode).to.equal(400);
@@ -81,7 +93,7 @@ describe('/customers', () => {
         return specRequest({
           url: '/customers',
           method: 'POST',
-          payload: {password: '12345'}
+          payload: {password: '8u{F0*W1l5'}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
@@ -93,7 +105,7 @@ describe('/customers', () => {
         return specRequest({
           url: '/customers',
           method: 'POST',
-          payload: {email: 'bigwednesday.io', password: '12345'}
+          payload: {email: 'bigwednesday.io', password: '8u{F0*W1l5'}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);

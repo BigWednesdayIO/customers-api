@@ -9,7 +9,7 @@ const auth0Client = require('../lib/auth0_client');
 describe('/customers/authenticate', () => {
   describe('post', () => {
     const testEmail = `${cuid()}@bigwednesday.io`;
-    const testPassword = '123456';
+    const testPassword = '8u{F0*W1l5';
     let testCustomerId;
     let authResponse;
 
@@ -78,7 +78,7 @@ describe('/customers/authenticate', () => {
       return specRequest({
         url: '/customers/authenticate',
         method: 'POST',
-        payload: {email: `${cuid()}@bigwednesday.io`, password: '123456'}
+        payload: {email: `${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'}
       })
       .then(response => {
         expect(response.statusCode).to.equal(401);
@@ -103,7 +103,7 @@ describe('/customers/authenticate', () => {
         return specRequest({
           url: '/customers/authenticate',
           method: 'POST',
-          payload: {password: '12345'}
+          payload: {password: '8u{F0*W1l5'}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
@@ -115,7 +115,7 @@ describe('/customers/authenticate', () => {
         return specRequest({
           url: '/customers/authenticate',
           method: 'POST',
-          payload: {email: 'bigwednesday.io', password: '12345'}
+          payload: {email: 'bigwednesday.io', password: '8u{F0*W1l5'}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
