@@ -1,0 +1,30 @@
+{
+  "extends": "xo-space/esnext",
+  "rules": {
+    "strict": [2, "global"],
+    "camelcase": 0,
+  },
+  "ecmaFeatures": {
+    "arrowFunctions": true,
+    "blockBindings": true,
+    "classes": true,
+    "defaultParams": false,
+    "destructuring": false,
+    "forOf": true,
+    "generators": true,
+    "globalReturn": false,
+    "modules": false,
+    "objectLiteralComputedProperties": true,
+    "objectLiteralDuplicateProperties": true,
+    "objectLiteralShorthandMethods": true,
+    "objectLiteralShorthandProperties": true,
+    "octalLiterals": true,
+    "regexUFlag": false,
+    "regexYFlag": false,
+    "restParams": false,
+    "spread": false,
+    "superInFunctions": false,
+    "templateStrings": true,
+    "unicodeCodePointEscapes": false
+  }
+}

@@ -1,0 +1,17 @@
+machine:
+  services:
+    - docker
+
+dependencies:
+  cache_directories:
+    - '~/docker'
+  override:
+    - if [[ -e ~/docker/node.tar ]]; then docker load -i ~/docker/node.tar; fi
+    - docker pull node:5.0.0
+    - mkdir -p ~/docker
+    - docker save node:5.0.0 > ~/docker/node.tar
+    - docker build -t customers-api .
+
+test:
+  override:
+    - docker run -w "/src" customers-api bash -c "npm run ci";
