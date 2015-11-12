@@ -13,7 +13,9 @@ describe('/customers/authenticate', () => {
     let testCustomerId;
     let authResponse;
 
-    before(() => {
+    before(function () {
+      this.timeout(5000);
+
       return specRequest({
         url: '/customers',
         method: 'POST',

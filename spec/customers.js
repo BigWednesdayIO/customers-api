@@ -11,7 +11,9 @@ describe('/customers', () => {
     const testEmail = `${cuid()}@bigwednesday.io`;
     let createUserResponse;
 
-    before(() => {
+    before(function () {
+      this.timeout(5000);
+
       createUserResponse = undefined;
       return specRequest({
         url: '/customers',
