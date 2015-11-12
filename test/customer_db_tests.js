@@ -8,10 +8,12 @@ const customerDb = require('../lib/customer_db');
 
 describe('Customer DB', () => {
   describe('create', () => {
+    let sandbox;
     let createUserStub;
 
     beforeEach(() => {
-      createUserStub = sinon.stub(auth0Client, 'createUser', (params, callback) => {
+      sandbox = sinon.sandbox.create();
+      createUserStub = sandbox.stub(auth0Client, 'createUser', (params, callback) => {
         if (params.email === 'existing@bigwednesday.io') {
           const auth0UserExistsError = new Error();
           auth0UserExistsError.code = 'user_exists';
@@ -27,7 +29,7 @@ describe('Customer DB', () => {
     });
 
     afterEach(() => {
-      createUserStub.restore();
+      sandbox.restore();
     });
 
     it('creates user in auth0', () => {
