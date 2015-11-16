@@ -11,6 +11,7 @@ const dataset = require('../lib/dataset');
 describe('Customer repository', () => {
   let sandbox;
   let createUserStub;
+  let deleteUserStub;
   let saveStub;
   let keySpy;
 
@@ -28,12 +29,19 @@ describe('Customer repository', () => {
         auth0InvalidPasswordError.code = 'invalid_password';
         return callback(auth0InvalidPasswordError);
       }
-      callback(null, {email: params.email, bigwednesday_id: params.bigwednesday_id});
+      callback(null, {user_id: 'auth0|987654321', email: params.email, bigwednesday_id: params.bigwednesday_id});
+    });
+
+    deleteUserStub = sandbox.stub(auth0Client, 'deleteUser', (err, callback) => {
+      callback();
     });
 
     keySpy = sandbox.spy(dataset, 'key');
 
     saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
+      if (args.data.email === 'fail_to_persist@bigwednesday.io') {
+        return callback('Cannot save');
+      }
       callback();
     });
   });
@@ -68,6 +76,16 @@ describe('Customer repository', () => {
       sinon.assert.calledWith(saveStub, sinon.match(value => {
         return !value.data.hasOwnProperty('password');
       }));
+    });
+
+    it('removes customer from auth0 if persistence fails', () => {
+      return customerDb.create({email: 'fail_to_persist@bigwednesday.io', password: '12345'})
+        .then(() => {
+          throw new Error('Create customer should fail');
+        }, () => {
+          sinon.assert.calledOnce(deleteUserStub);
+          sinon.assert.calledWith(deleteUserStub, sinon.match('auth0|987654321'));
+        });
     });
 
     it('returns id', () => {
