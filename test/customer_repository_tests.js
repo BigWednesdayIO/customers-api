@@ -5,10 +5,10 @@ const expect = require('chai').expect;
 const sinon = require('sinon');
 
 const auth0Client = require('../lib/auth0_client');
-const customerDb = require('../lib/customer_db');
+const customerDb = require('../lib/customer_repository');
 const dataset = require('../lib/dataset');
 
-describe('Customer DB', () => {
+describe('Customer repository', () => {
   let sandbox;
   let createUserStub;
   let saveStub;
