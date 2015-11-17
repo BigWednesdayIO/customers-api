@@ -66,7 +66,7 @@ describe('/customers', () => {
       expect(token.bigwednesday_id).to.equal(createUserResponse.result.id);
     });
 
-    it('returns http 400 when user exists', () => {
+    it('returns http 400 when customer already exists', () => {
       return specRequest({
         url: '/customers',
         method: 'POST',
