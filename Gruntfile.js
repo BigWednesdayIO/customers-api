@@ -32,12 +32,12 @@ module.exports = function (grunt) {
       }
     },
     watch: {
-      app: {
-        files: ['<%= app %>', '<%= tests %>'],
+      tests: {
+        files: ['<%= app %>', '!./lib/server.js', '!./lib/handlers/*.js', '<%= tests %>'],
         tasks: ['lint', 'test']
       },
       specs: {
-        files: ['<%= specs %>'],
+        files: ['./lib/server.js', './lib/handlers/*.js', '<%= specs %>'],
         tasks: ['lint', 'spec']
       }
     },

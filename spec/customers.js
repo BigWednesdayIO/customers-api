@@ -9,7 +9,11 @@ const auth0Client = require('../lib/auth0_client');
 
 describe('/customers', () => {
   describe('post', () => {
-    const customerCredentials = {email: `${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'};
+    const customerParams = {
+      email: `${cuid()}@bigwednesday.io`,
+      password: '8u{F0*W1l5',
+      vatNumber: 'YNG675'
+    };
     let createUserResponse;
 
     before(function () {
@@ -19,7 +23,7 @@ describe('/customers', () => {
       return specRequest({
         url: '/customers',
         method: 'POST',
-        payload: customerCredentials
+        payload: customerParams
       })
       .then(response => {
         if (response.statusCode !== 201) {
@@ -29,11 +33,13 @@ describe('/customers', () => {
       });
     });
 
-    after(done => {
+    after(function (done) {
+      this.timeout(5000);
+
       specRequest({
         url: '/customers/authenticate',
         method: 'POST',
-        payload: customerCredentials
+        payload: _.pick(customerParams, ['email', 'password'])
       })
       .then(authResponse => {
         const auth0UserId = jsonwebtoken.decode(authResponse.result.token).sub;
@@ -50,7 +56,7 @@ describe('/customers', () => {
     });
 
     it('returns customer resource', () => {
-      expect(_.omit(createUserResponse.result, 'id')).to.eql(_.omit(customerCredentials, 'password'));
+      expect(_.omit(createUserResponse.result, 'id')).to.eql(_.omit(customerParams, 'password'));
       expect(createUserResponse.result.id).to.match(/^c.*/);
       expect(createUserResponse.result.id).to.have.length(25);
     });
@@ -59,7 +65,7 @@ describe('/customers', () => {
       return specRequest({
         url: '/customers',
         method: 'POST',
-        payload: customerCredentials
+        payload: customerParams
       })
       .then(response => {
         expect(response.statusCode).to.equal(400);
@@ -71,7 +77,7 @@ describe('/customers', () => {
       return specRequest({
         url: '/customers',
         method: 'POST',
-        payload: _.defaults({password: '1'}, customerCredentials)
+        payload: _.defaults({password: '1'}, customerParams)
       })
       .then(response => {
         expect(response.statusCode).to.equal(400);
