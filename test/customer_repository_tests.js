@@ -102,7 +102,7 @@ describe('Customer repository', () => {
         .then(() => {
           throw new Error('Create customer should fail for existing user');
         }, err => {
-          expect(err.name).to.equal('UserExistsError');
+          expect(err.name).to.equal('CustomerExistsError');
           expect(err instanceof Error).to.equal(true);
         });
     });
@@ -133,7 +133,7 @@ describe('Customer repository', () => {
           });
         }
 
-        callback(null, undefined);
+        callback();
       });
     });
 
@@ -150,6 +150,66 @@ describe('Customer repository', () => {
         .get('unknown')
         .then(customer => {
           expect(customer).not.to.be.ok;
+        });
+    });
+  });
+
+  describe('update', () => {
+    let saveStub;
+    let updatedCustomer;
+    const existingCustomer = {
+      id: 'A',
+      email: 'existing@bigwednesday.io'
+    };
+    const updateParameters = {
+      email: 'existing@bigwednesday.io',
+      vatNumber: 'UHYGFL'
+    };
+
+    beforeEach(() => {
+      sandbox.stub(dataset, 'get', (args, callback) => {
+        if (args.path[1] === 'A') {
+          return callback(null, {
+            key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
+            data: _.omit(existingCustomer, 'id')
+          });
+        }
+
+        callback();
+      });
+
+      saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
+        callback();
+      });
+
+      return customerRepository
+        .update('A', updateParameters)
+        .then(customer => {
+          updatedCustomer = customer;
+        });
+    });
+
+    it('persists updated attributes', () => {
+      sinon.assert.calledOnce(saveStub);
+      sinon.assert.calledWith(saveStub, sinon.match({
+        key: dataset.key(['Customer', 'A']),
+        method: 'update',
+        data: updateParameters
+      }));
+    });
+
+    it('returns updated resource', () => {
+      expect(updatedCustomer).to.eql(Object.assign({id: existingCustomer.id}, updateParameters));
+    });
+
+    it('errors on non-existent customer', () => {
+      return customerRepository
+        .update('Z', updateParameters)
+        .then(() => {
+          throw new Error('Error expected');
+        }, err => {
+          expect(err.name).to.equal('CustomerNotFoundError');
+          expect(err instanceof Error).to.equal(true);
         });
     });
   });

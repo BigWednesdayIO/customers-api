@@ -77,7 +77,7 @@ describe('Password authenticator', () => {
       nock.cleanAll();
     });
 
-    it('authenticates with Auth0', () => {
+    it('errors on invalid password', () => {
       return authenticatePassword('test@bigwednesday.io', 'password')
         .then(() => {
           throw new Error('Error expected');
