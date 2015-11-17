@@ -126,18 +126,30 @@ describe('Customer repository', () => {
 
     beforeEach(() => {
       sandbox.stub(dataset, 'get', (args, callback) => {
-        callback(null, {
-          key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
-          data: _.omit(existingCustomer, 'id')
-        });
+        if (args.path[1] === 'A') {
+          return callback(null, {
+            key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
+            data: _.omit(existingCustomer, 'id')
+          });
+        }
+
+        callback(null, undefined);
       });
     });
 
-    it('gets customer by id', () => {
+    it('returns customer by id', () => {
       return customerRepository
         .get('A')
         .then(customer => {
           expect(customer).to.eql(existingCustomer);
+        });
+    });
+
+    it('returns undefined when customer does not exist', () => {
+      return customerRepository
+        .get('unknown')
+        .then(customer => {
+          expect(customer).not.to.be.ok;
         });
     });
   });

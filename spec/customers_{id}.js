@@ -30,5 +30,12 @@ describe('/customers/{id}', () => {
     it('returns the customer resource', () => {
       expect(getResponse.result).to.eql(_.omit(createResponse.result, 'token'));
     });
+
+    it('returns 404 when customer does not exist', () => {
+      return specRequest({url: '/customers/unknown', method: 'GET'})
+        .then(response => {
+          expect(response.statusCode).to.equal(404);
+        });
+    });
   });
 });
