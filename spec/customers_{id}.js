@@ -1,6 +1,5 @@
 'use strict';
 
-// const _ = require('lodash');
 const cuid = require('cuid');
 const expect = require('chai').expect;
 const specRequest = require('./spec_request');

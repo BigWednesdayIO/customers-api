@@ -145,11 +145,14 @@ describe('Customer repository', () => {
         });
     });
 
-    it('returns undefined when customer does not exist', () => {
+    it('errors on non-existent customer', () => {
       return customerRepository
         .get('unknown')
-        .then(customer => {
-          expect(customer).not.to.be.ok;
+        .then(() => {
+          throw new Error('Error expected');
+        }, err => {
+          expect(err.name).to.equal('CustomerNotFoundError');
+          expect(err instanceof Error).to.equal(true);
         });
     });
   });
