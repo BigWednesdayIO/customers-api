@@ -25,7 +25,6 @@ dev:
     - '8080'
   volumes:
     - .:/src
-  working_dir: /src
   links:
     - gclouddatastore
   environment:
