@@ -46,7 +46,7 @@ describe('/customers/{id}', () => {
 
   describe('put', () => {
     const createCustomerPayload = {email: `${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'};
-    const updateCustomerPayload = {email: createCustomerPayload.email, vatNumber: 'HY7UJL'};
+    const updateCustomerPayload = {email: `${cuid()}@bigwednesday.io`, vatNumber: 'HY7UJL'};
     let createResponse;
     let updateResponse;
 

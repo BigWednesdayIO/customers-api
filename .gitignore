@@ -29,3 +29,5 @@ node_modules
 
 # VS Code config directory
 .vscode
+
+.retire-cache/

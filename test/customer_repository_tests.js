@@ -20,15 +20,15 @@ describe('Customer repository', () => {
   });
 
   describe('create', () => {
-    let createCustomerStub;
-    let deleteCustomerStub;
+    let createUserStub;
+    let deleteUserStub;
     let saveStub;
     let keySpy;
     let createdCustomer;
     const createCustomerParams = {email: 'test@bigwednesday.io', password: '12345'};
 
     beforeEach(() => {
-      createCustomerStub = sandbox.stub(auth0Client, 'createUser', (params, callback) => {
+      createUserStub = sandbox.stub(auth0Client, 'createUser', (params, callback) => {
         if (params.email === 'existing@bigwednesday.io') {
           const auth0UserExistsError = new Error();
           auth0UserExistsError.code = 'user_exists';
@@ -42,7 +42,7 @@ describe('Customer repository', () => {
         callback(null, {user_id: 'auth0|987654321', email: params.email, bigwednesday_id: params.bigwednesday_id});
       });
 
-      deleteCustomerStub = sandbox.stub(auth0Client, 'deleteUser', (err, callback) => {
+      deleteUserStub = sandbox.stub(auth0Client, 'deleteUser', (id, callback) => {
         callback();
       });
 
@@ -62,8 +62,8 @@ describe('Customer repository', () => {
     });
 
     it('creates user in auth0', () => {
-      sinon.assert.calledOnce(createCustomerStub);
-      sinon.assert.calledWith(createCustomerStub, sinon.match(createCustomerParams));
+      sinon.assert.calledOnce(createUserStub);
+      sinon.assert.calledWith(createUserStub, sinon.match(createCustomerParams));
     });
 
     it('persists customer', () => {
@@ -83,8 +83,8 @@ describe('Customer repository', () => {
         .then(() => {
           throw new Error('Create customer should fail');
         }, () => {
-          sinon.assert.calledOnce(deleteCustomerStub);
-          sinon.assert.calledWith(deleteCustomerStub, sinon.match('auth0|987654321'));
+          sinon.assert.calledOnce(deleteUserStub);
+          sinon.assert.calledWith(deleteUserStub, sinon.match('auth0|987654321'));
         });
     });
 
@@ -159,7 +159,11 @@ describe('Customer repository', () => {
 
   describe('update', () => {
     let saveStub;
+    let updateUserEmailStub;
     let updatedCustomer;
+
+    const fakeAuth0Id = 'auth0|12345';
+
     const existingCustomer = {
       id: 'A',
       email: 'existing@bigwednesday.io'
@@ -174,7 +178,7 @@ describe('Customer repository', () => {
         if (args.path[1] === 'A') {
           return callback(null, {
             key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
-            data: _.omit(existingCustomer, 'id')
+            data: Object.assign({_hidden: {auth0Id: fakeAuth0Id}}, _.omit(existingCustomer, 'id'))
           });
         }
 
@@ -182,6 +186,10 @@ describe('Customer repository', () => {
       });
 
       saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
+        callback();
+      });
+
+      updateUserEmailStub = sandbox.stub(auth0Client, 'updateUserEmail', (id, email, verify, callback) => {
         callback();
       });
 
@@ -213,6 +221,20 @@ describe('Customer repository', () => {
         }, err => {
           expect(err.name).to.equal('CustomerNotFoundError');
           expect(err instanceof Error).to.equal(true);
+        });
+    });
+
+    it('does not update email address in auth0 when not changed', () => {
+      sinon.assert.notCalled(updateUserEmailStub);
+    });
+
+    it('updates email address in auth0 when changed', () => {
+      const updatedEmailAddress = 'updated@bigwednesday.io';
+      return customerRepository
+        .update('A', _.defaults({email: updatedEmailAddress}, updateParameters))
+        .then(() => {
+          sinon.assert.calledOnce(updateUserEmailStub);
+          sinon.assert.calledWith(updateUserEmailStub, fakeAuth0Id, updatedEmailAddress, true);
         });
     });
   });
