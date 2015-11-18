@@ -56,7 +56,7 @@ describe('/customers/{id}', () => {
           expect(response.statusCode).to.equal(201);
           createResponse = response;
           return specRequest({
-            url: response.headers.location,
+            url: createResponse.headers.location,
             method: 'PUT',
             payload: updateCustomerPayload
           });
@@ -85,6 +85,20 @@ describe('/customers/{id}', () => {
       })
       .then(response => {
         expect(response.statusCode).to.equal(404);
+      });
+    });
+
+    describe('validation', () => {
+      it('rejects id', () => {
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'PUT',
+          payload: Object.assign({id: 'A'}, updateCustomerPayload)
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result.message).to.equal('"id" is not allowed');
+        });
       });
     });
   });
