@@ -121,7 +121,8 @@ describe('Customer repository', () => {
   describe('get', () => {
     const existingCustomer = {
       id: 'A',
-      email: 'existing@bigwednesday.io'
+      email: 'existing@bigwednesday.io',
+      _metadata: {created: new Date()}
     };
 
     beforeEach(() => {
@@ -129,7 +130,7 @@ describe('Customer repository', () => {
         if (args.path[1] === 'A') {
           return callback(null, {
             key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
-            data: _.omit(existingCustomer, 'id')
+            data: Object.assign({_metadata_created: existingCustomer._metadata.created}, _.omit(existingCustomer, 'id'))
           });
         }
 
@@ -166,7 +167,8 @@ describe('Customer repository', () => {
 
     const existingCustomer = {
       id: 'A',
-      email: 'existing@bigwednesday.io'
+      email: 'existing@bigwednesday.io',
+      _metadata: {created: new Date()}
     };
     const updateParameters = {
       email: 'existing@bigwednesday.io',
@@ -178,7 +180,10 @@ describe('Customer repository', () => {
         if (args.path[1] === 'A') {
           return callback(null, {
             key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
-            data: Object.assign({_hidden: {auth0Id: fakeAuth0Id}}, _.omit(existingCustomer, 'id'))
+            data: Object.assign({
+              _hidden: {auth0Id: fakeAuth0Id},
+              _metadata_created: existingCustomer._metadata.created
+            }, _.omit(existingCustomer, 'id'))
           });
         }
 
@@ -210,7 +215,10 @@ describe('Customer repository', () => {
     });
 
     it('returns updated resource', () => {
-      expect(updatedCustomer).to.eql(Object.assign({id: existingCustomer.id}, updateParameters));
+      expect(updatedCustomer).to.eql(Object.assign({
+        id: existingCustomer.id,
+        _metadata: existingCustomer._metadata
+      }, updateParameters));
     });
 
     it('errors on non-existent customer', () => {

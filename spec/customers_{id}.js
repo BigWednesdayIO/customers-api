@@ -75,7 +75,12 @@ describe('/customers/{id}', () => {
     });
 
     it('returns the updated customer resource', () => {
-      expect(updateResponse.result).to.eql(Object.assign({id: createResponse.result.id}, updateCustomerPayload));
+      const expected = Object.assign({
+        id: createResponse.result.id,
+        _metadata: createResponse.result._metadata
+      }, updateCustomerPayload);
+
+      expect(updateResponse.result).to.eql(expected);
     });
 
     it('returns 404 when customer does not exist', () => {

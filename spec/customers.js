@@ -56,9 +56,11 @@ describe('/customers', () => {
     });
 
     it('returns customer resource', () => {
-      expect(_.omit(createUserResponse.result, 'id')).to.eql(_.omit(customerParams, 'password'));
+      expect(_.omit(createUserResponse.result, ['id', '_metadata'])).to.eql(_.omit(customerParams, 'password'));
       expect(createUserResponse.result.id).to.match(/^c.*/);
       expect(createUserResponse.result.id).to.have.length(25);
+      expect(createUserResponse.result).to.have.deep.property('_metadata.created');
+      expect(createUserResponse.result._metadata.created).to.be.instanceOf(Date);
     });
 
     it('returns http 400 when customer already exists', () => {
