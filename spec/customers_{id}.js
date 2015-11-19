@@ -14,7 +14,12 @@ describe('/customers/{id}', () => {
       return specRequest({
         url: '/customers',
         method: 'POST',
-        payload: {email: `${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'}
+        payload: {
+          email: `${cuid()}@bigwednesday.io`,
+          password: '8u{F0*W1l5',
+          vat_number: '12345',
+          line_of_business: 'Eating & Drinking Out'
+        }
       })
       .then(response => {
         expect(response.statusCode).to.equal(201);
@@ -46,8 +51,16 @@ describe('/customers/{id}', () => {
   });
 
   describe('put', () => {
-    const createCustomerPayload = {email: `${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'};
-    const updateCustomerPayload = {email: `${cuid()}@bigwednesday.io`, vatNumber: 'HY7UJL'};
+    const createCustomerPayload = {
+      email: `${cuid()}@bigwednesday.io`,
+      password: '8u{F0*W1l5',
+      line_of_business: 'Eating & Drinking Out'
+    };
+    const updateCustomerPayload = {
+      email: `${cuid()}@bigwednesday.io`,
+      vat_number: 'HY7UJL'
+    };
+
     let createResponse;
     let updateResponse;
 

@@ -12,7 +12,8 @@ describe('/customers', () => {
     const customerParams = {
       email: `${cuid()}@bigwednesday.io`,
       password: '8u{F0*W1l5',
-      vatNumber: 'YNG675'
+      vat_number: 'YNG675',
+      line_of_business: 'Eating & Drinking Out'
     };
     let createUserResponse;
 

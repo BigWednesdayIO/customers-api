@@ -168,11 +168,12 @@ describe('Customer repository', () => {
     const existingCustomer = {
       id: 'A',
       email: 'existing@bigwednesday.io',
+      line_of_business: 'Eating & Drinking Out',
       _metadata: {created: new Date()}
     };
     const updateParameters = {
       email: 'existing@bigwednesday.io',
-      vatNumber: 'UHYGFL'
+      vat_number: 'UHYGFL'
     };
 
     beforeEach(() => {
