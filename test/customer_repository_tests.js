@@ -172,7 +172,7 @@ describe('Customer repository', () => {
       _metadata: {created: new Date()}
     };
     const updateParameters = {
-      email: 'existing@bigwednesday.io',
+      email: 'updated@bigwednesday.io',
       vat_number: 'UHYGFL'
     };
 
@@ -222,6 +222,11 @@ describe('Customer repository', () => {
       }, updateParameters));
     });
 
+    it('updates email address in auth0', () => {
+      sinon.assert.calledOnce(updateUserEmailStub);
+      sinon.assert.calledWith(updateUserEmailStub, fakeAuth0Id, updateParameters.email, true);
+    });
+
     it('errors on non-existent customer', () => {
       return customerRepository
         .update('Z', updateParameters)
@@ -230,20 +235,6 @@ describe('Customer repository', () => {
         }, err => {
           expect(err.name).to.equal('CustomerNotFoundError');
           expect(err instanceof Error).to.equal(true);
-        });
-    });
-
-    it('does not update email address in auth0 when not changed', () => {
-      sinon.assert.notCalled(updateUserEmailStub);
-    });
-
-    it('updates email address in auth0 when changed', () => {
-      const updatedEmailAddress = 'updated@bigwednesday.io';
-      return customerRepository
-        .update('A', _.defaults({email: updatedEmailAddress}, updateParameters))
-        .then(() => {
-          sinon.assert.calledOnce(updateUserEmailStub);
-          sinon.assert.calledWith(updateUserEmailStub, fakeAuth0Id, updatedEmailAddress, true);
         });
     });
   });
