@@ -25,6 +25,7 @@ describe('Customer repository', () => {
     let saveStub;
     let keySpy;
     let createdCustomer;
+
     const createCustomerParams = {email: 'test@bigwednesday.io', password: '12345'};
 
     beforeEach(() => {
@@ -39,7 +40,13 @@ describe('Customer repository', () => {
           auth0InvalidPasswordError.code = 'invalid_password';
           return callback(auth0InvalidPasswordError);
         }
-        callback(null, {user_id: 'auth0|987654321', email: params.email, bigwednesday_id: params.bigwednesday_id});
+
+        callback(null, {
+          user_id: 'auth0|987654321',
+          email: params.email,
+          bigwednesday_id: params.bigwednesday_id,
+          scope: params.scope
+        });
       });
 
       deleteUserStub = sandbox.stub(auth0Client, 'deleteUser', (id, callback) => {
@@ -63,7 +70,13 @@ describe('Customer repository', () => {
 
     it('creates user in auth0', () => {
       sinon.assert.calledOnce(createUserStub);
-      sinon.assert.calledWith(createUserStub, sinon.match(createCustomerParams));
+      sinon.assert.calledWith(
+        createUserStub,
+        sinon.match(Object.assign({
+          bigwednesday_id: createdCustomer.id,
+          scope: [`user:${createdCustomer.id}`]
+        }, createCustomerParams))
+      );
     });
 
     it('persists customer', () => {

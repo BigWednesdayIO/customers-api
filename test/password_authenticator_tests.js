@@ -16,6 +16,7 @@ describe('Password authenticator', () => {
     const mockAuthResponse = {
       id_token: jsonwebtoken.sign({
         bigwednesday_id: '12345',
+        scope: ['user:12345'],
         email: testEmail
       }, new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'))
     };
