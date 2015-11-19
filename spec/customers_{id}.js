@@ -1,5 +1,6 @@
 'use strict';
 
+const _ = require('lodash');
 const cuid = require('cuid');
 const expect = require('chai').expect;
 const specRequest = require('./spec_request');
@@ -98,6 +99,30 @@ describe('/customers/{id}', () => {
         .then(response => {
           expect(response.statusCode).to.equal(400);
           expect(response.result.message).to.equal('"id" is not allowed');
+        });
+      });
+
+      it('requires email address', () => {
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'PUT',
+          payload: _.omit(updateCustomerPayload, 'email')
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result.message).to.equal('child "email" fails because ["email" is required]');
+        });
+      });
+
+      it('validates email address format', () => {
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'PUT',
+          payload: _.defaults({email: 'bigwednesday.io', updateCustomerPayload})
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result.message).to.equal('child "email" fails because ["email" must be a valid email]');
         });
       });
     });
