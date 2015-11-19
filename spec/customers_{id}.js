@@ -130,6 +130,18 @@ describe('/customers/{id}', () => {
           expect(response.result.message).to.equal('child "email" fails because ["email" must be a valid email]');
         });
       });
+
+      it('rejects _metadata', () => {
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'PUT',
+          payload: Object.assign({_metadata: {created: new Date()}}, updateCustomerPayload)
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result.message).to.equal('"_metadata" is not allowed');
+        });
+      });
     });
   });
 });
