@@ -31,6 +31,7 @@
     "hapi-swaggered": "https://registry.npmjs.org/hapi-swaggered/-/hapi-swaggered-2.4.1.tgz",
     "joi": "^6.9.1",
     "jsonwebtoken": "^5.4.1",
+    "lodash": "^3.10.1",
     "request-promise": "^1.0.2"
   },
   "devDependencies": {
