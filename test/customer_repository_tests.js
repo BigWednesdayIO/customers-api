@@ -74,7 +74,7 @@ describe('Customer repository', () => {
         createUserStub,
         sinon.match(Object.assign({
           bigwednesday_id: createdCustomer.id,
-          scope: [`user:${createdCustomer.id}`]
+          scope: [`customer:${createdCustomer.id}`]
         }, createCustomerParams))
       );
     });

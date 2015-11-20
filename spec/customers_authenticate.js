@@ -69,7 +69,7 @@ describe('/customers/authenticate', () => {
         });
 
       expect(token.bigwednesday_id).to.equal(authResponse.result.id);
-      expect(_.includes(token.scope, `user:${testCustomerId}`)).to.be.ok;
+      expect(_.includes(token.scope, `customer:${testCustomerId}`)).to.be.ok;
     });
 
     it('returns http 400 when user does not exist', () => {
