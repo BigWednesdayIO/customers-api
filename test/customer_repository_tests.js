@@ -215,6 +215,11 @@ describe('Customer repository', () => {
       }));
     });
 
+    it('does not keep obsolete properties', () => {
+      sinon.assert.calledWithMatch(saveStub,
+        sinon.match(value => !value.data.hasOwnProperty('line_of_business')));
+    });
+
     it('returns updated resource', () => {
       expect(updatedCustomer).to.eql(Object.assign({
         id: existingCustomer.id,
