@@ -1,0 +1,37 @@
+{
+  "apiVersion": "v1",
+  "kind": "ReplicationController",
+  "metadata": {
+    "name": "customers-api-rc-{{TAG}}",
+    "labels": {
+      "app": "customers-api",
+      "env": "{{NAMESPACE}}"
+    }
+  },
+  "spec": {
+    "replicas": {{REPLICAS}},
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "customers-api",
+          "env": "{{NAMESPACE}}",
+          "deployment": "{{DEPLOYMENT_ID}}"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "api",
+            "image": "{{QUALIFIED_IMAGE_NAME}}",
+            "env": [],
+            "ports": [
+              {
+                "containerPort": 8080
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

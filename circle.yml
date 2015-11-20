@@ -4,10 +4,15 @@ machine:
   python:
     version: 2.7.3
 
+checkout:
+  post:
+    - git submodule update --init
+
 dependencies:
   cache_directories:
     - '~/docker'
   override:
+    - deploy_scripts/install_deployment_tools.sh
     - sudo pip install -U docker-compose
     - if [[ -e ~/docker/node.tar ]]; then docker load -i ~/docker/node.tar; fi
     - if [[ -e ~/docker/gcd.tar ]]; then docker load -i ~/docker/gcd.tar; fi
@@ -20,3 +25,15 @@ dependencies:
 test:
   override:
     - docker-compose run api npm run ci
+
+deployment:
+  dev:
+    branch: master
+    commands:
+      - echo "production = true" > .npmrc
+      - deploy_scripts/rolling_deploy.sh customers-api app=customers-api development ${PWD} ${PWD}/kubernetes/rc.json ${PWD}/kubernetes/service.json
+  prod:
+    branch: production
+    commands:
+      - echo "production = true" > .npmrc
+      - deploy_scripts/rolling_deploy.sh customers-api app=customers-api production ${PWD} ${PWD}/kubernetes/rc.json ${PWD}/kubernetes/service.json
