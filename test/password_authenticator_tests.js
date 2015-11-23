@@ -14,7 +14,10 @@ describe('Password authenticator', () => {
     let authenticatePasswordResult;
 
     const mockAuthResponse = {
-      id_token: jsonwebtoken.sign({bigwednesday_id: '12345'}, new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'))
+      id_token: jsonwebtoken.sign({
+        bigwednesday_id: '12345',
+        email: testEmail
+      }, new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'))
     };
 
     before(() => {
@@ -25,7 +28,7 @@ describe('Password authenticator', () => {
                   password: testPassword,
                   connection: process.env.AUTH0_CONNECTION,
                   grant_type: 'password',
-                  scope: 'openid scope bigwednesday_id'
+                  scope: 'openid scope bigwednesday_id email'
                 })
                 .reply(200, mockAuthResponse);
 
@@ -65,7 +68,7 @@ describe('Password authenticator', () => {
           password: 'password',
           connection: process.env.AUTH0_CONNECTION,
           grant_type: 'password',
-          scope: 'openid scope bigwednesday_id'
+          scope: 'openid scope bigwednesday_id email'
         })
         .reply(401, {
           error: 'invalid_user_password',
@@ -77,7 +80,7 @@ describe('Password authenticator', () => {
       nock.cleanAll();
     });
 
-    it('authenticates with Auth0', () => {
+    it('errors on invalid password', () => {
       return authenticatePassword('test@bigwednesday.io', 'password')
         .then(() => {
           throw new Error('Error expected');

@@ -1,14 +1,18 @@
 'use strict';
 
+const _ = require('lodash');
 const expect = require('chai').expect;
 const cuid = require('cuid');
-const jsonwebtoken = require('jsonwebtoken');
 const specRequest = require('./spec_request');
-const auth0Client = require('../lib/auth0_client');
 
 describe('/customers', () => {
   describe('post', () => {
-    const testEmail = `${cuid()}@bigwednesday.io`;
+    const customerParams = {
+      email: `test-${cuid()}@bigwednesday.io`,
+      password: '8u{F0*W1l5',
+      vat_number: 'YNG675',
+      line_of_business: 'Eating & Drinking Out'
+    };
     let createUserResponse;
 
     before(function () {
@@ -18,10 +22,7 @@ describe('/customers', () => {
       return specRequest({
         url: '/customers',
         method: 'POST',
-        payload: {
-          email: testEmail,
-          password: '8u{F0*W1l5'
-        }
+        payload: customerParams
       })
       .then(response => {
         if (response.statusCode !== 201) {
@@ -29,11 +30,6 @@ describe('/customers', () => {
         }
         createUserResponse = response;
       });
-    });
-
-    after(done => {
-      const auth0UserId = jsonwebtoken.decode(createUserResponse.result.token).sub;
-      auth0Client.deleteUser(auth0UserId, done);
     });
 
     it('returns http 201', () => {
@@ -44,33 +40,19 @@ describe('/customers', () => {
       expect(createUserResponse.headers.location).to.equal(`/customers/${createUserResponse.result.id}`);
     });
 
-    it('returns email address', () => {
-      expect(createUserResponse.result.email).to.equal(testEmail);
-    });
-
-    it('returns id', () => {
+    it('returns customer resource', () => {
+      expect(_.omit(createUserResponse.result, ['id', '_metadata'])).to.eql(_.omit(customerParams, 'password'));
       expect(createUserResponse.result.id).to.match(/^c.*/);
       expect(createUserResponse.result.id).to.have.length(25);
+      expect(createUserResponse.result).to.have.deep.property('_metadata.created');
+      expect(createUserResponse.result._metadata.created).to.be.instanceOf(Date);
     });
 
-    it('returns token', () => {
-      const token = jsonwebtoken.verify(
-        createUserResponse.result.token,
-        new Buffer(process.env.AUTH0_CLIENT_SECRET, 'base64'),
-        {
-          algorithms: ['HS256'],
-          audience: process.env.AUTHO_CLIENT_ID,
-          issuer: `https://${process.env.AUTH0_DOMAIN}/`
-        });
-
-      expect(token.bigwednesday_id).to.equal(createUserResponse.result.id);
-    });
-
-    it('returns http 400 when user exists', () => {
+    it('returns http 400 when customer already exists', () => {
       return specRequest({
         url: '/customers',
         method: 'POST',
-        payload: {email: testEmail, password: '8u{F0*W1l5'}
+        payload: customerParams
       })
       .then(response => {
         expect(response.statusCode).to.equal(400);
@@ -82,7 +64,7 @@ describe('/customers', () => {
       return specRequest({
         url: '/customers',
         method: 'POST',
-        payload: {email: testEmail, password: '1'}
+        payload: _.defaults({password: '1'}, customerParams)
       })
       .then(response => {
         expect(response.statusCode).to.equal(400);
