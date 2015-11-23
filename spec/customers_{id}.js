@@ -90,6 +90,13 @@ describe('/customers/{id}', () => {
       expect(updateResponse.result).to.eql(expected);
     });
 
+    it('persists updates', () => {
+      return specRequest({url: createResponse.headers.location, method: 'GET'})
+        .then(getResponse => {
+          expect(updateResponse.result).to.eql(getResponse.result);
+        });
+    });
+
     it('returns 404 when customer does not exist', () => {
       return specRequest({
         url: '/customers/unknown',
