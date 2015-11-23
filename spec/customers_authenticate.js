@@ -4,11 +4,10 @@ const expect = require('chai').expect;
 const cuid = require('cuid');
 const jsonwebtoken = require('jsonwebtoken');
 const specRequest = require('./spec_request');
-const auth0Client = require('../lib/auth0_client');
 
 describe('/customers/authenticate', () => {
   describe('post', () => {
-    const testEmail = `${cuid()}@bigwednesday.io`;
+    const testEmail = `test-${cuid()}@bigwednesday.io`;
     const testPassword = '8u{F0*W1l5';
     let testCustomerId;
     let authResponse;
@@ -44,11 +43,6 @@ describe('/customers/authenticate', () => {
           authResponse = response;
         });
       });
-    });
-
-    after(done => {
-      const auth0UserId = jsonwebtoken.decode(authResponse.result.token).sub;
-      auth0Client.deleteUser(auth0UserId, done);
     });
 
     it('returns http 200', () => {

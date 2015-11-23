@@ -3,14 +3,12 @@
 const _ = require('lodash');
 const expect = require('chai').expect;
 const cuid = require('cuid');
-const jsonwebtoken = require('jsonwebtoken');
 const specRequest = require('./spec_request');
-const auth0Client = require('../lib/auth0_client');
 
 describe('/customers', () => {
   describe('post', () => {
     const customerParams = {
-      email: `${cuid()}@bigwednesday.io`,
+      email: `test-${cuid()}@bigwednesday.io`,
       password: '8u{F0*W1l5',
       vat_number: 'YNG675',
       line_of_business: 'Eating & Drinking Out'
@@ -31,20 +29,6 @@ describe('/customers', () => {
           return console.error(response.result);
         }
         createUserResponse = response;
-      });
-    });
-
-    after(function (done) {
-      this.timeout(5000);
-
-      specRequest({
-        url: '/customers/authenticate',
-        method: 'POST',
-        payload: _.pick(customerParams, ['email', 'password'])
-      })
-      .then(authResponse => {
-        const auth0UserId = jsonwebtoken.decode(authResponse.result.token).sub;
-        auth0Client.deleteUser(auth0UserId, done);
       });
     });
 

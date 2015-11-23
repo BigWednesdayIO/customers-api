@@ -1,9 +1,11 @@
 'use strict';
 
 const _ = require('lodash');
+const nock = require('nock');
 const dataset = require('../lib/dataset');
+const auth0Client = require('../lib/auth0_client');
 
-module.exports.deleteTestData = () => {
+const deleteDataStoreData = () => {
   const query = dataset.createQuery('Customer');
 
   return new Promise((resolve, reject) => {
@@ -30,4 +32,31 @@ module.exports.deleteTestData = () => {
   });
 };
 
-after(() => module.exports.deleteTestData());
+before(() => {
+  nock.recorder.rec({
+    dont_print: true,
+    output_objects: true
+  });
+});
+
+after(done => {
+  const nockCallObjects = nock.recorder.play();
+  const createdAuth0 = _(nockCallObjects)
+    .filter({
+      path: '/api/users/',
+      scope: `https://${process.env.AUTH0_DOMAIN}:443`,
+      method: 'POST',
+      status: 200
+    })
+    .map(r => r.response.user_id)
+    .value();
+
+  const auth0UserDeleted = _.after(createdAuth0.length, () => {
+    deleteDataStoreData().then(done);
+  });
+
+  createdAuth0.forEach(id => {
+    console.log('Deleting user', id);
+    auth0Client.deleteUser(id, auth0UserDeleted);
+  });
+});

@@ -6,32 +6,37 @@ const expect = require('chai').expect;
 const specRequest = require('./spec_request');
 
 describe('/customers/{id}', () => {
+  const createCustomerPayload = {
+    email: `test-${cuid()}@bigwednesday.io`,
+    password: '8u{F0*W1l5',
+    vat_number: '12345',
+    line_of_business: 'Eating & Drinking Out'
+  };
+  let createResponse;
+
+  before(() => {
+    return specRequest({
+      url: '/customers',
+      method: 'POST',
+      payload: createCustomerPayload
+    })
+    .then(response => {
+      createResponse = response;
+      expect(response.statusCode).to.equal(201);
+    });
+  });
+
   describe('get', () => {
-    let createResponse;
     let getResponse;
 
     before(() => {
-      return specRequest({
-        url: '/customers',
-        method: 'POST',
-        payload: {
-          email: `${cuid()}@bigwednesday.io`,
-          password: '8u{F0*W1l5',
-          vat_number: '12345',
-          line_of_business: 'Eating & Drinking Out'
-        }
-      })
-      .then(response => {
-        expect(response.statusCode).to.equal(201);
-        createResponse = response;
-        return specRequest({url: response.headers.location, method: 'GET'});
-      })
-      .then(response => {
-        if (response.statusCode !== 200) {
-          return console.error(response.result);
-        }
-        getResponse = response;
-      });
+      return specRequest({url: createResponse.headers.location, method: 'GET'})
+        .then(response => {
+          if (response.statusCode !== 200) {
+            return console.error(response.result);
+          }
+          getResponse = response;
+        });
     });
 
     it('returns http 200 when customer is found', () => {
@@ -51,36 +56,25 @@ describe('/customers/{id}', () => {
   });
 
   describe('put', () => {
-    const createCustomerPayload = {
-      email: `${cuid()}@bigwednesday.io`,
-      password: '8u{F0*W1l5',
-      line_of_business: 'Eating & Drinking Out'
-    };
     const updateCustomerPayload = {
-      email: `${cuid()}@bigwednesday.io`,
+      email: `test-${cuid()}@bigwednesday.io`,
       vat_number: 'HY7UJL'
     };
 
-    let createResponse;
     let updateResponse;
 
     before(() => {
-      return specRequest({url: '/customers', method: 'POST', payload: createCustomerPayload})
-        .then(response => {
-          expect(response.statusCode).to.equal(201);
-          createResponse = response;
-          return specRequest({
-            url: createResponse.headers.location,
-            method: 'PUT',
-            payload: updateCustomerPayload
-          });
-        })
-        .then(response => {
-          if (response.statusCode !== 200) {
-            return console.error(response.result);
-          }
-          updateResponse = response;
-        });
+      return specRequest({
+        url: createResponse.headers.location,
+        method: 'PUT',
+        payload: updateCustomerPayload
+      })
+      .then(response => {
+        if (response.statusCode !== 200) {
+          return console.error(response.result);
+        }
+        updateResponse = response;
+      });
     });
 
     it('returns http 200 when customer is updated', () => {
