@@ -1,5 +1,6 @@
 'use strict';
 
+const _ = require('lodash');
 const expect = require('chai').expect;
 const cuid = require('cuid');
 const jsonwebtoken = require('jsonwebtoken');
@@ -68,6 +69,7 @@ describe('/customers/authenticate', () => {
         });
 
       expect(token.bigwednesday_id).to.equal(authResponse.result.id);
+      expect(_.includes(token.scope, `customer:${testCustomerId}`)).to.be.ok;
     });
 
     it('returns http 400 when user does not exist', () => {

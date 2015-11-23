@@ -4,6 +4,9 @@ const _ = require('lodash');
 const cuid = require('cuid');
 const expect = require('chai').expect;
 const specRequest = require('./spec_request');
+const signToken = require('./sign_jwt');
+
+const adminToken = signToken({scope: ['admin']});
 
 describe('/customers/{id}', () => {
   const createCustomerPayload = {
@@ -12,7 +15,9 @@ describe('/customers/{id}', () => {
     vat_number: '12345',
     line_of_business: 'Eating & Drinking Out'
   };
+
   let createResponse;
+  let validToken;
 
   before(() => {
     return specRequest({
@@ -23,6 +28,7 @@ describe('/customers/{id}', () => {
     .then(response => {
       createResponse = response;
       expect(response.statusCode).to.equal(201);
+      validToken = signToken({scope: [`customer:${createResponse.result.id}`]});
     });
   });
 
@@ -30,7 +36,7 @@ describe('/customers/{id}', () => {
     let getResponse;
 
     before(() => {
-      return specRequest({url: createResponse.headers.location, method: 'GET'})
+      return specRequest({url: `${createResponse.headers.location}?token=${validToken}`, method: 'GET'})
         .then(response => {
           if (response.statusCode !== 200) {
             return console.error(response.result);
@@ -47,11 +53,29 @@ describe('/customers/{id}', () => {
       expect(getResponse.result).to.eql(createResponse.result);
     });
 
-    it('returns 404 when customer does not exist', () => {
-      return specRequest({url: '/customers/unknown', method: 'GET'})
+    it('returns 403 when requesting customer without correct scope', () => {
+      const otherUsersToken = signToken({scope: ['customer:12345']});
+      return specRequest({url: `${createResponse.headers.location}?token=${otherUsersToken}`, method: 'GET'})
         .then(response => {
-          expect(response.statusCode).to.equal(404);
+          expect(response.statusCode).to.equal(403);
+          expect(response.result.message).match(/Insufficient scope/);
         });
+    });
+
+    describe('admin access', () => {
+      it('admin scope can access any customer', () => {
+        return specRequest({url: `${createResponse.headers.location}?token=${adminToken}`, method: 'GET'})
+          .then(response => {
+            expect(response.statusCode).to.equal(200);
+          });
+      });
+
+      it('returns 404 when customer does not exist', () => {
+        return specRequest({url: `/customers/unknown?token=${adminToken}`, method: 'GET'})
+          .then(response => {
+            expect(response.statusCode).to.equal(404);
+          });
+      });
     });
   });
 
@@ -65,7 +89,7 @@ describe('/customers/{id}', () => {
 
     before(() => {
       return specRequest({
-        url: createResponse.headers.location,
+        url: `${createResponse.headers.location}?token=${validToken}`,
         method: 'PUT',
         payload: updateCustomerPayload
       })
@@ -91,27 +115,53 @@ describe('/customers/{id}', () => {
     });
 
     it('persists updates', () => {
-      return specRequest({url: createResponse.headers.location, method: 'GET'})
+      return specRequest({url: `${createResponse.headers.location}?token=${validToken}`, method: 'GET'})
         .then(getResponse => {
           expect(updateResponse.result).to.eql(getResponse.result);
         });
     });
 
-    it('returns 404 when customer does not exist', () => {
+    it('returns 403 when updating customer without correct scope', () => {
+      const otherUsersToken = signToken({scope: ['customer:12345']});
       return specRequest({
-        url: '/customers/unknown',
+        url: `${createResponse.headers.location}?token=${otherUsersToken}`,
         method: 'PUT',
         payload: updateCustomerPayload
       })
       .then(response => {
-        expect(response.statusCode).to.equal(404);
+        expect(response.statusCode).to.equal(403);
+        expect(response.result.message).match(/Insufficient scope/);
+      });
+    });
+
+    describe('admin access', () => {
+      it('admin scope can update any customer', () => {
+        return specRequest({
+          url: `${createResponse.headers.location}?token=${adminToken}`,
+          method: 'PUT',
+          payload: updateCustomerPayload
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(200);
+        });
+      });
+
+      it('returns 404 when customer does not exist', () => {
+        return specRequest({
+          url: `/customers/unknown?token=${adminToken}`,
+          method: 'PUT',
+          payload: updateCustomerPayload
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(404);
+        });
       });
     });
 
     describe('validation', () => {
       it('rejects id', () => {
         return specRequest({
-          url: createResponse.headers.location,
+          url: `${createResponse.headers.location}?token=${validToken}`,
           method: 'PUT',
           payload: Object.assign({id: 'A'}, updateCustomerPayload)
         })
@@ -123,7 +173,7 @@ describe('/customers/{id}', () => {
 
       it('requires email address', () => {
         return specRequest({
-          url: createResponse.headers.location,
+          url: `${createResponse.headers.location}?token=${validToken}`,
           method: 'PUT',
           payload: _.omit(updateCustomerPayload, 'email')
         })
@@ -135,7 +185,7 @@ describe('/customers/{id}', () => {
 
       it('validates email address format', () => {
         return specRequest({
-          url: createResponse.headers.location,
+          url: `${createResponse.headers.location}?token=${validToken}`,
           method: 'PUT',
           payload: _.defaults({email: 'bigwednesday.io', updateCustomerPayload})
         })
@@ -147,7 +197,7 @@ describe('/customers/{id}', () => {
 
       it('rejects _metadata', () => {
         return specRequest({
-          url: createResponse.headers.location,
+          url: `${createResponse.headers.location}?token=${validToken}`,
           method: 'PUT',
           payload: Object.assign({_metadata: {created: new Date()}}, updateCustomerPayload)
         })
