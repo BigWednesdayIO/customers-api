@@ -31,7 +31,7 @@
     "hapi-auth-jwt2": "^5.2.1",
     "hapi-error-schemas": "^1.0.0",
     "hapi-swaggered": "https://registry.npmjs.org/hapi-swaggered/-/hapi-swaggered-2.4.1.tgz",
-    "hapi-version-route": "^1.0.1",
+    "hapi-version-route": "^1.1.0",
     "joi": "^6.9.1",
     "jsonwebtoken": "^5.4.1",
     "lodash": "^3.10.1",
