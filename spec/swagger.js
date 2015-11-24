@@ -12,7 +12,7 @@ describe('/swagger', () => {
         return console.error(err);
       }
 
-      server.inject({url: '/customers/swagger', method: 'GET'}, response => {
+      server.inject({url: '/swagger', method: 'GET'}, response => {
         swagger = JSON.parse(response.payload);
         done();
       });

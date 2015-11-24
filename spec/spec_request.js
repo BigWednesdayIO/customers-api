@@ -12,7 +12,7 @@ module.exports = function (options) {
           return reject(err);
         }
 
-        server.inject({url: '/customers/swagger', method: 'GET'}, swaggerResponse => {
+        server.inject({url: '/swagger', method: 'GET'}, swaggerResponse => {
           const swagger = swaggerResponse.result;
 
           server.inject(options, response => {
