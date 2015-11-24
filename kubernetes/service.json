@@ -4,7 +4,7 @@
     "metadata": {
         "name": "customers-api-svc",
         "labels": {
-            "app": "search-api",
+            "app": "customers-api",
             "env": "{{NAMESPACE}}"
         }
     },
