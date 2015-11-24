@@ -28,7 +28,7 @@ test:
 
 deployment:
   dev:
-    branch: master
+    branch: feature/deployment
     commands:
       - echo "production = true" > .npmrc
       - deploy_scripts/rolling_deploy.sh customers-api app=customers-api development ${PWD} ${PWD}/kubernetes/rc.json ${PWD}/kubernetes/service.json
