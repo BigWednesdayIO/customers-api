@@ -13,7 +13,14 @@ describe('/customers/{id}', () => {
     email: `test-${cuid()}@bigwednesday.io`,
     password: '8u{F0*W1l5',
     vat_number: '12345',
-    line_of_business: 'Eating & Drinking Out'
+    line_of_business: 'Eating & Drinking Out',
+    supplier_relationships: [{
+      supplier_id: 'supplier-a',
+      relationship_number: 'a-1234'
+    }, {
+      supplier_id: 'supplier-b',
+      relationship_number: 'b-6789'
+    }]
   };
 
   let createResponse;
@@ -82,7 +89,11 @@ describe('/customers/{id}', () => {
   describe('put', () => {
     const updateCustomerPayload = {
       email: `test-${cuid()}@bigwednesday.io`,
-      vat_number: 'HY7UJL'
+      vat_number: 'HY7UJL',
+      supplier_relationships: [{
+        supplier_id: 'supplier-b',
+        relationship_number: 'b-updated'
+      }]
     };
 
     let updateResponse;

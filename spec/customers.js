@@ -11,7 +11,11 @@ describe('/customers', () => {
       email: `test-${cuid()}@bigwednesday.io`,
       password: '8u{F0*W1l5',
       vat_number: 'YNG675',
-      line_of_business: 'Eating & Drinking Out'
+      line_of_business: 'Eating & Drinking Out',
+      supplier_relationships: [{
+        supplier_id: 'supplier-a',
+        relationship_number: '1234589'
+      }]
     };
     let createUserResponse;
 
