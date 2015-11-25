@@ -32,4 +32,12 @@ describe('/swagger', () => {
       expect(result).to.equal(undefined);
     });
   });
+
+  it('does not contain generic definitions', () => {
+    const names = Object.keys(swagger.definitions);
+
+    names.forEach(name => {
+      expect(name.endsWith('Model')).to.equal(false, `Found generic model "${name}" in swagger schema. Set meta className attribute.`);
+    });
+  });
 });
