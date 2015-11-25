@@ -98,7 +98,7 @@ describe('/customers/{id}', () => {
 
     let updateResponse;
 
-    before(() => {
+    beforeEach(() => {
       return specRequest({
         url: `${createResponse.headers.location}?token=${validToken}`,
         method: 'PUT',
@@ -130,6 +130,17 @@ describe('/customers/{id}', () => {
         .then(getResponse => {
           expect(updateResponse.result).to.eql(getResponse.result);
         });
+    });
+
+    it('overwrites supplier relationships when not provided', () => {
+      return specRequest({
+        url: `${createResponse.headers.location}?token=${validToken}`,
+        method: 'PUT',
+        payload: {email: updateCustomerPayload.email}
+      })
+      .then(response => {
+        expect(response.result.supplier_relationships).not.to.be.ok;
+      });
     });
 
     it('returns 403 when updating customer without correct scope', () => {
