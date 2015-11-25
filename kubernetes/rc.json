@@ -1,0 +1,62 @@
+{
+  "apiVersion": "v1",
+  "kind": "ReplicationController",
+  "metadata": {
+    "name": "customers-api-rc-{{TAG}}",
+    "labels": {
+      "app": "customers-api",
+      "env": "{{NAMESPACE}}"
+    }
+  },
+  "spec": {
+    "replicas": {{REPLICAS}},
+    "template": {
+      "metadata": {
+        "labels": {
+          "app": "customers-api",
+          "env": "{{NAMESPACE}}",
+          "deployment": "{{DEPLOYMENT_ID}}"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "api",
+            "image": "{{QUALIFIED_IMAGE_NAME}}",
+            "env": [
+              {
+                "name": "AUTH0_DOMAIN",
+                "value": "{{AUTH0_DOMAIN}}"
+              },
+              {
+                "name": "AUTHO_CLIENT_ID",
+                "value": "{{AUTHO_CLIENT_ID}}"
+              },
+              {
+                "name": "AUTH0_CLIENT_SECRET",
+                "value": "{{AUTH0_CLIENT_SECRET}}"
+              },
+              {
+                "name": "AUTH0_CONNECTION",
+                "value": "{{AUTH0_CONNECTION}}"
+              },
+              {
+                "name": "GCLOUD_PROJECT_ID",
+                "value": "{{CLOUDSDK_CORE_PROJECT}}"
+              },
+              {
+                "name": "GCLOUD_KEY",
+                "value": "{{GCLOUD_KEY}}"
+              }
+            ],
+            "ports": [
+              {
+                "containerPort": 8080
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

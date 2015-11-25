@@ -13,7 +13,7 @@ describe('authentication', () => {
 
     _(server.table()[0].table)
       .filter(route => {
-        return !_.includes(['/customers/swagger', '/customers/version', '/customers/authenticate'], route.path) &&
+        return !_.includes(['/swagger', '/version', '/customers/authenticate'], route.path) &&
           !(route.path === '/customers' && route.method === 'post');
       })
       .value()

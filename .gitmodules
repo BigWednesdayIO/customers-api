@@ -1,0 +1,3 @@
+[submodule "deploy_scripts"]
+	path = deploy_scripts
+	url = git@github.com:BigWednesdayIO/kubernetes-deployment-scripts.git

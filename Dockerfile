@@ -1,4 +1,4 @@
-FROM node:5.0.0
+FROM node:5.1.0
 
 ADD . /src
 
@@ -8,4 +8,4 @@ EXPOSE 8080
 
 WORKDIR /src
 
-CMD ["node", "/src/index.js"]
+CMD ["npm", "start"]
