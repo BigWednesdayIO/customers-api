@@ -9,10 +9,12 @@ const customerRepository = require('../lib/customer_repository');
 const dataset = require('../lib/dataset');
 
 describe('Customer repository', () => {
+  const fakeCreatedTimestamp = 1448450346461;
   let sandbox;
 
   beforeEach(() => {
     sandbox = sinon.sandbox.create();
+    sandbox.useFakeTimers(fakeCreatedTimestamp);
   });
 
   afterEach(() => {
@@ -101,13 +103,24 @@ describe('Customer repository', () => {
         });
     });
 
+    it('returns customer attributes', () => {
+      const attributeParams = _.omit(createCustomerParams, 'password');
+      const createdAttributes = _.omit(createdCustomer, ['id', '_metadata']);
+      expect(createdAttributes).to.eql(attributeParams);
+    });
+
     it('returns id', () => {
       expect(createdCustomer.id).to.match(/^c.*/);
       expect(createdCustomer.id).to.have.length(25);
     });
 
-    it('returns email', () => {
-      expect(createdCustomer.email).to.equal('test@bigwednesday.io');
+    it('does not return password', () => {
+      expect(createdCustomer.password).not.to.be.ok;
+    });
+
+    it('returns created date', () => {
+      expect(createdCustomer._metadata).to.be.ok;
+      expect(createdCustomer._metadata.created).to.eql(new Date(fakeCreatedTimestamp));
     });
 
     it('errors when customer exists', () => {
