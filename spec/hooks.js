@@ -56,7 +56,6 @@ after(done => {
   });
 
   createdAuth0.forEach(id => {
-    console.log('Deleting user', id);
     auth0Client.deleteUser(id, auth0UserDeleted);
   });
 });
