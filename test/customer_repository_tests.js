@@ -156,7 +156,7 @@ describe('Customer repository', () => {
         if (args.path[1] === 'A') {
           return callback(null, {
             key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
-            data: Object.assign({_metadata_created: existingCustomer._metadata.created}, _.omit(existingCustomer, 'id'))
+            data: Object.assign({_metadata_created: existingCustomer._metadata.created}, _.omit(existingCustomer, ['id', '_metadata']))
           });
         }
 
@@ -178,7 +178,7 @@ describe('Customer repository', () => {
         .then(() => {
           throw new Error('Error expected');
         }, err => {
-          expect(err.name).to.equal('CustomerNotFoundError');
+          expect(err.name).to.equal('EntityNotFoundError');
           expect(err instanceof Error).to.equal(true);
         });
     });
@@ -264,7 +264,7 @@ describe('Customer repository', () => {
         .then(() => {
           throw new Error('Error expected');
         }, err => {
-          expect(err.name).to.equal('CustomerNotFoundError');
+          expect(err.name).to.equal('EntityNotFoundError');
           expect(err instanceof Error).to.equal(true);
         });
     });
