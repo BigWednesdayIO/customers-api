@@ -4,7 +4,7 @@ const _ = require('lodash');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 
-const membershipRepository = require('../lib/membership_repository');
+const memberships = require('../lib/membership_repository');
 const dataset = require('../lib/dataset');
 
 describe('Membership repository', () => {
@@ -37,7 +37,7 @@ describe('Membership repository', () => {
 
       keySpy = sandbox.spy(dataset, 'key');
 
-      return membershipRepository.create('cust-a', createParams)
+      return memberships.create('cust-a', createParams)
         .then(result => {
           createdMembership = result;
         });

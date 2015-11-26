@@ -5,7 +5,7 @@ const expect = require('chai').expect;
 const sinon = require('sinon');
 
 const auth0Client = require('../lib/auth0_client');
-const customerRepository = require('../lib/customer_repository');
+const customers = require('../lib/customer_repository');
 const dataset = require('../lib/dataset');
 
 describe('Customer repository', () => {
@@ -64,7 +64,7 @@ describe('Customer repository', () => {
         callback();
       });
 
-      return customerRepository.create(createCustomerParams)
+      return customers.create(createCustomerParams)
         .then(result => {
           createdCustomer = result;
         });
@@ -94,7 +94,7 @@ describe('Customer repository', () => {
     });
 
     it('removes customer from auth0 if persistence fails', () => {
-      return customerRepository.create({email: 'fail_to_persist@bigwednesday.io', password: '12345'})
+      return customers.create({email: 'fail_to_persist@bigwednesday.io', password: '12345'})
         .then(() => {
           throw new Error('Create customer should fail');
         }, () => {
@@ -124,7 +124,7 @@ describe('Customer repository', () => {
     });
 
     it('errors when customer exists', () => {
-      return customerRepository.create({email: 'existing@bigwednesday.io', password: '12345'})
+      return customers.create({email: 'existing@bigwednesday.io', password: '12345'})
         .then(() => {
           throw new Error('Create customer should fail for existing user');
         }, err => {
@@ -134,7 +134,7 @@ describe('Customer repository', () => {
     });
 
     it('errors for password to weak', () => {
-      return customerRepository.create({email: 'test@bigwednesday.io', password: 'weak'})
+      return customers.create({email: 'test@bigwednesday.io', password: 'weak'})
         .then(() => {
           throw new Error('Create customer should fail');
         }, err => {
@@ -165,7 +165,7 @@ describe('Customer repository', () => {
     });
 
     it('returns customer by id', () => {
-      return customerRepository
+      return customers
         .get('A')
         .then(customer => {
           expect(customer).to.eql(existingCustomer);
@@ -173,7 +173,7 @@ describe('Customer repository', () => {
     });
 
     it('errors on non-existent customer', () => {
-      return customerRepository
+      return customers
         .get('unknown')
         .then(() => {
           throw new Error('Error expected');
@@ -225,7 +225,7 @@ describe('Customer repository', () => {
         callback();
       });
 
-      return customerRepository
+      return customers
         .update('A', updateParameters)
         .then(customer => {
           updatedCustomer = customer;
@@ -259,7 +259,7 @@ describe('Customer repository', () => {
     });
 
     it('errors on non-existent customer', () => {
-      return customerRepository
+      return customers
         .update('Z', updateParameters)
         .then(() => {
           throw new Error('Error expected');
