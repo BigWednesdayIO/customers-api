@@ -5,7 +5,7 @@ const expect = require('chai').expect;
 const sinon = require('sinon');
 
 const auth0Client = require('../lib/auth0_client');
-const customers = require('../lib/customer_repository');
+const customers = require('../lib/stores/customer_store');
 const dataset = require('../lib/dataset');
 
 describe('Customer repository', () => {

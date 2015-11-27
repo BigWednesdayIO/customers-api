@@ -4,7 +4,7 @@ const _ = require('lodash');
 const expect = require('chai').expect;
 const sinon = require('sinon');
 
-const memberships = require('../lib/membership_repository');
+const memberships = require('../lib/stores/membership_store');
 const dataset = require('../lib/dataset');
 
 const buildRawMembership = membership => ({
