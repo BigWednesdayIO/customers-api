@@ -173,4 +173,85 @@ describe('Membership repository', () => {
         });
     });
   });
+
+  describe('update', () => {
+    let saveStub;
+    let updatedMembership;
+
+    const existingMembership = {
+      id: 'membership-a',
+      supplier_id: 'supplier-a',
+      membership_number: '0903309455',
+      _metadata: {created: new Date()}
+    };
+    const updateParams = {
+      supplier_id: 'supplier-b',
+      membership_number: '088777364'
+    };
+
+    beforeEach(() => {
+      sandbox.stub(dataset, 'get', (args, callback) => {
+        const membershipAPath = ['Customer', 'customer-a', 'Membership', 'membership-a'];
+
+        if (_.eq(args.path, membershipAPath)) {
+          return callback(null, {
+            key: {path: membershipAPath},
+            data: Object.assign(
+              {_metadata_created: existingMembership._metadata.created},
+              _.omit(existingMembership, ['id', '_metadata']))
+          });
+        }
+
+        callback();
+      });
+
+      saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
+        callback();
+      });
+
+      return memberships
+        .update('customer-a', 'membership-a', updateParams)
+        .then(membership => {
+          updatedMembership = membership;
+        });
+    });
+
+    it('persists updated attributes', () => {
+      sinon.assert.calledOnce(saveStub);
+      sinon.assert.calledWith(saveStub, sinon.match({
+        key: dataset.key(['Customer', 'customer-a', 'Membership', 'membership-a']),
+        method: 'update',
+        data: updateParams
+      }));
+    });
+
+    it('returns updated resource', () => {
+      expect(updatedMembership).to.eql(Object.assign({
+        id: existingMembership.id,
+        _metadata: existingMembership._metadata
+      }, updateParams));
+    });
+
+    it('errors on non-existent customer', () => {
+      return memberships
+        .update('unknown-customer', 'membership-a', updateParams)
+        .then(() => {
+          throw new Error('Error expected');
+        }, err => {
+          expect(err.name).to.equal('EntityNotFoundError');
+          expect(err instanceof Error).to.equal(true);
+        });
+    });
+
+    it('errors on non-existent membership', () => {
+      return memberships
+        .update('customer-a', 'unknown-membership', updateParams)
+        .then(() => {
+          throw new Error('Error expected');
+        }, err => {
+          expect(err.name).to.equal('EntityNotFoundError');
+          expect(err instanceof Error).to.equal(true);
+        });
+    });
+  });
 });

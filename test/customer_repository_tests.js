@@ -210,7 +210,7 @@ describe('Customer repository', () => {
             data: Object.assign({
               _hidden: {auth0Id: fakeAuth0Id},
               _metadata_created: existingCustomer._metadata.created
-            }, _.omit(existingCustomer, 'id'))
+            }, _.omit(existingCustomer, ['id', '_metadata']))
           });
         }
 
