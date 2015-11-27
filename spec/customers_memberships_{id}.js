@@ -29,9 +29,10 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
       validToken = signToken({scope: [`customer:${customer.id}`]});
 
       return specRequest({
-        url: `/customers/${customer.id}/memberships?token=${validToken}`,
+        url: `/customers/${customer.id}/memberships`,
         method: 'POST',
-        payload: createParams
+        payload: createParams,
+        headers: {authorization: validToken}
       });
     })
     .then(response => {
@@ -44,8 +45,9 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
     before(() => {
       return specRequest({
-        url: `/customers/${customer.id}/memberships/${createResponse.result.id}?token=${validToken}`,
-        method: 'GET'
+        url: `/customers/${customer.id}/memberships/${createResponse.result.id}`,
+        method: 'GET',
+        headers: {authorization: validToken}
       })
       .then(response => {
         getResponse = response;
@@ -63,8 +65,9 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
     it('returns 403 when requesting memberships without correct scope', () => {
       const otherUsersToken = signToken({scope: ['customer:12345']});
       return specRequest({
-        url: `/customers/${customer.id}/memberships/${createResponse.result.id}?token=${otherUsersToken}`,
-        method: 'GET'
+        url: `/customers/${customer.id}/memberships/${createResponse.result.id}`,
+        method: 'GET',
+        headers: {authorization: otherUsersToken}
       })
       .then(response => {
         expect(response.statusCode).to.equal(403);
@@ -74,8 +77,9 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
     it('returns 404 when membership does not exist', () => {
       return specRequest({
-        url: `/customers/${customer.id}/memberships/unkown_membership?token=${validToken}`,
-        method: 'GET'
+        url: `/customers/${customer.id}/memberships/unkown_membership`,
+        method: 'GET',
+        headers: {authorization: validToken}
       })
       .then(response => {
         expect(response.statusCode).to.equal(404);
@@ -86,8 +90,9 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
     describe('admin', () => {
       it('gets memberships for any customer', () => {
         return specRequest({
-          url: `/customers/${customer.id}/memberships/${createResponse.result.id}?token=${adminToken}`,
-          method: 'GET'
+          url: `/customers/${customer.id}/memberships/${createResponse.result.id}`,
+          method: 'GET',
+          headers: {authorization: adminToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(200);
@@ -96,8 +101,9 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
       it('returns 404 when customer does not exist', () => {
         return specRequest({
-          url: `/customers/unknown_customer/memberships/${createResponse.result.id}?token=${adminToken}`,
-          method: 'GET'
+          url: `/customers/unknown_customer/memberships/${createResponse.result.id}`,
+          method: 'GET',
+          headers: {authorization: adminToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(404);
@@ -117,9 +123,10 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
     before(() => {
       return specRequest({
-        url: `/customers/${customer.id}/memberships/${createResponse.result.id}?token=${validToken}`,
+        url: `/customers/${customer.id}/memberships/${createResponse.result.id}`,
         method: 'PUT',
-        payload: updateParams
+        payload: updateParams,
+        headers: {authorization: validToken}
       })
       .then(response => {
         updateResponse = response;
@@ -140,18 +147,23 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
     });
 
     it('persists updates', () => {
-      return specRequest({url: `/customers/${customer.id}/memberships/${createResponse.result.id}?token=${validToken}`, method: 'GET'})
-        .then(getResponse => {
-          expect(updateResponse.result).to.eql(getResponse.result);
-        });
+      return specRequest({
+        url: `/customers/${customer.id}/memberships/${createResponse.result.id}`,
+        method: 'GET',
+        headers: {authorization: validToken}
+      })
+      .then(getResponse => {
+        expect(updateResponse.result).to.eql(getResponse.result);
+      });
     });
 
     it('returns 403 when updating membership without correct scope', () => {
       const otherUsersToken = signToken({scope: ['customer:12345']});
       return specRequest({
-        url: `/customers/${customer.id}/memberships/${createResponse.result.id}?token=${otherUsersToken}`,
+        url: `/customers/${customer.id}/memberships/${createResponse.result.id}`,
         method: 'PUT',
-        payload: updateParams
+        payload: updateParams,
+        headers: {authorization: otherUsersToken}
       })
       .then(response => {
         expect(response.statusCode).to.equal(403);
@@ -161,9 +173,10 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
     it('returns 404 when membership does not exist', () => {
       return specRequest({
-        url: `/customers/${customer.id}/memberships/unknown_membership?token=${validToken}`,
+        url: `/customers/${customer.id}/memberships/unknown_membership`,
         method: 'PUT',
-        payload: updateParams
+        payload: updateParams,
+        headers: {authorization: validToken}
       })
       .then(response => {
         expect(response.statusCode).to.equal(404);
@@ -174,9 +187,10 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
     describe('admin', () => {
       it('updates any membership', () => {
         return specRequest({
-          url: `/customers/${customer.id}/memberships/${createResponse.result.id}?token=${adminToken}`,
+          url: `/customers/${customer.id}/memberships/${createResponse.result.id}`,
           method: 'PUT',
-          payload: updateParams
+          payload: updateParams,
+          headers: {authorization: adminToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(200);
@@ -185,9 +199,10 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
       it('returns 404 when customer does not exist', () => {
         return specRequest({
-          url: `/customers/unknown_customer/memberships/${createResponse.result.id}?token=${adminToken}`,
+          url: `/customers/unknown_customer/memberships/${createResponse.result.id}`,
           method: 'PUT',
-          payload: updateParams
+          payload: updateParams,
+          headers: {authorization: adminToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(404);
@@ -199,9 +214,10 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
     describe('validation', () => {
       it('requires supplier id', () => {
         return specRequest({
-          url: `/customers/${customer.id}/memberships/${createResponse.result.id}?token=${validToken}`,
+          url: `/customers/${customer.id}/memberships/${createResponse.result.id}`,
           method: 'PUT',
-          payload: _.omit(updateParams, 'supplier_id')
+          payload: _.omit(updateParams, 'supplier_id'),
+          headers: {authorization: validToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
@@ -211,9 +227,10 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
       it('requires supplier membership number', () => {
         return specRequest({
-          url: `/customers/${customer.id}/memberships/${createResponse.result.id}?token=${validToken}`,
+          url: `/customers/${customer.id}/memberships/${createResponse.result.id}`,
           method: 'PUT',
-          payload: _.omit(updateParams, 'membership_number')
+          payload: _.omit(updateParams, 'membership_number'),
+          headers: {authorization: validToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
@@ -228,9 +245,10 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
     before(() => {
       return specRequest({
-        url: `/customers/${customer.id}/memberships?token=${validToken}`,
+        url: `/customers/${customer.id}/memberships`,
         method: 'POST',
-        payload: createParams
+        payload: createParams,
+        headers: {authorization: validToken}
       })
       .then(response => {
         existingMembership = response.result;
@@ -239,8 +257,9 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
     it('returns http 204', () => {
       return specRequest({
-        url: `/customers/${customer.id}/memberships/${existingMembership.id}?token=${validToken}`,
-        method: 'DELETE'
+        url: `/customers/${customer.id}/memberships/${existingMembership.id}`,
+        method: 'DELETE',
+        headers: {authorization: validToken}
       })
       .then(response => expect(response.statusCode).to.equal(204));
     });
@@ -248,8 +267,9 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
     it('returns 403 when updating membership without correct scope', () => {
       const otherUsersToken = signToken({scope: ['customer:12345']});
       return specRequest({
-        url: `/customers/unknown_customer/memberships/${existingMembership.id}?token=${otherUsersToken}`,
-        method: 'DELETE'
+        url: `/customers/unknown_customer/memberships/${existingMembership.id}`,
+        method: 'DELETE',
+        headers: {authorization: otherUsersToken}
       })
       .then(response => {
         expect(response.statusCode).to.equal(403);
@@ -258,24 +278,30 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
     });
 
     it('returns http 404 when membership does not exist', () => {
-      return specRequest({url: `/customers/${customer.id}/memberships/unknown_membership?token=${validToken}`, method: 'DELETE'})
-        .then(response => {
-          expect(response.statusCode).to.equal(404);
-          expect(response.result).to.have.property('message', 'Membership "unknown_membership" not found.');
-        });
+      return specRequest({
+        url: `/customers/${customer.id}/memberships/unknown_membership`,
+        method: 'DELETE',
+        headers: {authorization: validToken}
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(404);
+        expect(response.result).to.have.property('message', 'Membership "unknown_membership" not found.');
+      });
     });
 
     describe('admin', () => {
       it('deletes any membership', () => {
         return specRequest({
-          url: `/customers/${customer.id}/memberships?token=${validToken}`,
+          url: `/customers/${customer.id}/memberships`,
           method: 'POST',
-          payload: createParams
+          payload: createParams,
+          headers: {authorization: validToken}
         })
         .then(response => {
           return specRequest({
-            url: `/customers/${customer.id}/memberships/${response.result.id}?token=${adminToken}`,
-            method: 'DELETE'
+            url: `/customers/${customer.id}/memberships/${response.result.id}`,
+            method: 'DELETE',
+            headers: {authorization: adminToken}
           });
         })
         .then(response => {
@@ -285,8 +311,9 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
 
       it('returns 404 when customer does not exist', () => {
         return specRequest({
-          url: `/customers/unknown_customer/memberships/${createResponse.result.id}?token=${adminToken}`,
-          method: 'DELETE'
+          url: `/customers/unknown_customer/memberships/${createResponse.result.id}`,
+          method: 'DELETE',
+          headers: {authorization: adminToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(404);
