@@ -254,4 +254,58 @@ describe('Membership repository', () => {
         });
     });
   });
+
+  describe('delete', () => {
+    let deleteStub;
+
+    beforeEach(() => {
+      sandbox.stub(dataset, 'get', (args, callback) => {
+        const membershipAPath = ['Customer', 'customer-a', 'Membership', 'membership-a'];
+
+        if (_.eq(args.path, membershipAPath)) {
+          return callback(null, {key: membershipAPath, data: {}});
+        }
+
+        callback();
+      });
+
+      deleteStub = sandbox.stub(dataset, 'delete', (args, callback) => {
+        callback();
+      });
+    });
+
+    it('deletes membership', () => {
+      return memberships
+        .delete('customer-a', 'membership-a')
+        .then(() => {
+          sinon.assert.calledOnce(deleteStub);
+          sinon.assert.calledWith(
+            deleteStub,
+            sinon.match(dataset.key(['Customer', 'customer-a', 'Membership', 'membership-a']))
+          );
+        });
+    });
+
+    it('errors on non-existent customer', () => {
+      return memberships
+        .delete('unknown-customer', 'membership-a')
+        .then(() => {
+          throw new Error('Error expected');
+        }, err => {
+          expect(err.name).to.equal('EntityNotFoundError');
+          expect(err instanceof Error).to.equal(true);
+        });
+    });
+
+    it('errors on non-existent membership', () => {
+      return memberships
+        .delete('customer-a', 'unknown-membership')
+        .then(() => {
+          throw new Error('Error expected');
+        }, err => {
+          expect(err.name).to.equal('EntityNotFoundError');
+          expect(err instanceof Error).to.equal(true);
+        });
+    });
+  });
 });

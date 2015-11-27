@@ -222,4 +222,77 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
       });
     });
   });
+
+  describe('delete', () => {
+    let existingMembership;
+
+    before(() => {
+      return specRequest({
+        url: `/customers/${customer.id}/memberships?token=${validToken}`,
+        method: 'POST',
+        payload: createParams
+      })
+      .then(response => {
+        existingMembership = response.result;
+      });
+    });
+
+    it('returns http 204', () => {
+      return specRequest({
+        url: `/customers/${customer.id}/memberships/${existingMembership.id}?token=${validToken}`,
+        method: 'DELETE'
+      })
+      .then(response => expect(response.statusCode).to.equal(204));
+    });
+
+    it('returns 403 when updating membership without correct scope', () => {
+      const otherUsersToken = signToken({scope: ['customer:12345']});
+      return specRequest({
+        url: `/customers/unknown_customer/memberships/${existingMembership.id}?token=${otherUsersToken}`,
+        method: 'DELETE'
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(403);
+        expect(response.result.message).match(/Insufficient scope/);
+      });
+    });
+
+    it('returns http 404 when membership does not exist', () => {
+      return specRequest({url: `/customers/${customer.id}/memberships/unknown_membership?token=${validToken}`, method: 'DELETE'})
+        .then(response => {
+          expect(response.statusCode).to.equal(404);
+          expect(response.result).to.have.property('message', 'Membership "unknown_membership" not found.');
+        });
+    });
+
+    describe('admin', () => {
+      it('deletes any membership', () => {
+        return specRequest({
+          url: `/customers/${customer.id}/memberships?token=${validToken}`,
+          method: 'POST',
+          payload: createParams
+        })
+        .then(response => {
+          return specRequest({
+            url: `/customers/${customer.id}/memberships/${response.result.id}?token=${adminToken}`,
+            method: 'DELETE'
+          });
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(204);
+        });
+      });
+
+      it('returns 404 when customer does not exist', () => {
+        return specRequest({
+          url: `/customers/unknown_customer/memberships/${createResponse.result.id}?token=${adminToken}`,
+          method: 'DELETE'
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(404);
+          expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
+        });
+      });
+    });
+  });
 });
