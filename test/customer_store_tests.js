@@ -11,10 +11,40 @@ const dataset = require('../lib/dataset');
 describe('Customer repository', () => {
   const fakeCreatedTimestamp = 1448450346461;
   let sandbox;
+  let saveStub;
+
+  const existingCustomer = {
+    id: 'customer-a',
+    email: 'existing@bigwednesday.io',
+    line_of_business: 'Eating & Drinking Out',
+    _metadata: {created: new Date()}
+  };
+  const fakeAuth0Id = 'auth0|12345';
 
   beforeEach(() => {
     sandbox = sinon.sandbox.create();
     sandbox.useFakeTimers(fakeCreatedTimestamp);
+
+    saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
+      if (args.data.email === 'fail_to_persist@bigwednesday.io') {
+        return callback('Cannot save');
+      }
+      callback();
+    });
+
+    sandbox.stub(dataset, 'get', (args, callback) => {
+      if (_.last(args.path) === 'customer-a') {
+        return callback(null, {
+          key: {path: ['Customer', existingCustomer.id]},
+          data: Object.assign({
+            _hidden: {auth0Id: fakeAuth0Id},
+            _metadata_created: existingCustomer._metadata.created
+          }, _.omit(existingCustomer, ['id', '_metadata']))
+        });
+      }
+
+      callback();
+    });
   });
 
   afterEach(() => {
@@ -24,7 +54,6 @@ describe('Customer repository', () => {
   describe('create', () => {
     let createUserStub;
     let deleteUserStub;
-    let saveStub;
     let keySpy;
     let createdCustomer;
 
@@ -56,13 +85,6 @@ describe('Customer repository', () => {
       });
 
       keySpy = sandbox.spy(dataset, 'key');
-
-      saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
-        if (args.data.email === 'fail_to_persist@bigwednesday.io') {
-          return callback('Cannot save');
-        }
-        callback();
-      });
 
       return customers.create(createCustomerParams)
         .then(result => {
@@ -145,28 +167,9 @@ describe('Customer repository', () => {
   });
 
   describe('get', () => {
-    const existingCustomer = {
-      id: 'A',
-      email: 'existing@bigwednesday.io',
-      _metadata: {created: new Date()}
-    };
-
-    beforeEach(() => {
-      sandbox.stub(dataset, 'get', (args, callback) => {
-        if (args.path[1] === 'A') {
-          return callback(null, {
-            key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
-            data: Object.assign({_metadata_created: existingCustomer._metadata.created}, _.omit(existingCustomer, ['id', '_metadata']))
-          });
-        }
-
-        callback();
-      });
-    });
-
     it('returns customer by id', () => {
       return customers
-        .get('A')
+        .get('customer-a')
         .then(customer => {
           expect(customer).to.eql(existingCustomer);
         });
@@ -185,48 +188,21 @@ describe('Customer repository', () => {
   });
 
   describe('update', () => {
-    let saveStub;
     let updateUserEmailStub;
     let updatedCustomer;
 
-    const fakeAuth0Id = 'auth0|12345';
-
-    const existingCustomer = {
-      id: 'A',
-      email: 'existing@bigwednesday.io',
-      line_of_business: 'Eating & Drinking Out',
-      _metadata: {created: new Date()}
-    };
     const updateParameters = {
       email: 'updated@bigwednesday.io',
       vat_number: 'UHYGFL'
     };
 
     beforeEach(() => {
-      sandbox.stub(dataset, 'get', (args, callback) => {
-        if (args.path[1] === 'A') {
-          return callback(null, {
-            key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
-            data: Object.assign({
-              _hidden: {auth0Id: fakeAuth0Id},
-              _metadata_created: existingCustomer._metadata.created
-            }, _.omit(existingCustomer, ['id', '_metadata']))
-          });
-        }
-
-        callback();
-      });
-
-      saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
-        callback();
-      });
-
       updateUserEmailStub = sandbox.stub(auth0Client, 'updateUserEmail', (id, email, verify, callback) => {
         callback();
       });
 
       return customers
-        .update('A', updateParameters)
+        .update('customer-a', updateParameters)
         .then(customer => {
           updatedCustomer = customer;
         });
@@ -235,7 +211,7 @@ describe('Customer repository', () => {
     it('persists updated attributes', () => {
       sinon.assert.calledOnce(saveStub);
       sinon.assert.calledWith(saveStub, sinon.match({
-        key: dataset.key(['Customer', 'A']),
+        key: dataset.key(['Customer', 'customer-a']),
         method: 'update',
         data: updateParameters
       }));
@@ -260,7 +236,7 @@ describe('Customer repository', () => {
 
     it('errors on non-existent customer', () => {
       return customers
-        .update('Z', updateParameters)
+        .update('unknown-customer', updateParameters)
         .then(() => {
           throw new Error('Error expected');
         }, err => {
