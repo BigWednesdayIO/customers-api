@@ -63,4 +63,63 @@ describe('Membership repository', () => {
       expect(createdMembership._metadata.created).to.eql(new Date(fakeCreatedTimestamp));
     });
   });
+
+  describe('find', () => {
+    const existingMemberships = [{
+      id: 'membership-a',
+      supplier_id: 'supplier-a',
+      membership_number: '0903309455',
+      _metadata: {created: new Date()}
+    }, {
+      id: 'membership-b',
+      supplier_id: 'supplier-b',
+      membership_number: '9834908493834',
+      _metadata: {created: new Date()}
+    }];
+
+    beforeEach(() => {
+      sandbox.stub(dataset, 'createQuery', kind => {
+        return {
+          kind,
+          hasAncestor(key) {
+            this.ancestorKey = key;
+            return this;
+          },
+          order(order) {
+            this.sortOrder = order;
+            return this;
+          }
+        };
+      });
+
+      sandbox.stub(dataset, 'runQuery', (query, callback) => {
+        if (_.eq(query.ancestorKey.path, ['Customer', 'customer-a'])) {
+          callback(null, existingMemberships.map(membership => ({
+            key: {path: ['Customer', 'customer-a', 'Membership', membership.id]},
+            data: Object.assign({
+              _metadata_created: membership._metadata.created
+            }, _.omit(membership, ['id', '_metadata']))
+          })));
+        }
+
+        callback(null, []);
+      });
+    });
+
+    it('returns membership by id', () => {
+      return memberships
+        .find('customer-a')
+        .then(memberships => {
+          expect(memberships).to.eql(existingMemberships);
+        });
+    });
+
+    it('returns empty array for non-existent customer', () => {
+      return memberships
+        .find('unknown')
+        .then(memberships => {
+          expect(memberships).to.eql([]);
+        });
+    });
+  });
 });

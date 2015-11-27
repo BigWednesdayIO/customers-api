@@ -9,33 +9,31 @@ const signToken = require('./sign_jwt');
 const adminToken = signToken({scope: ['admin']});
 
 describe('memberships', () => {
-  let customer;
-  let validToken;
-
-  before(() => {
-    return specRequest({
-      url: '/customers',
-      method: 'POST',
-      payload: {email: `test-${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'}
-    })
-    .then(response => {
-      customer = response.result;
-      validToken = signToken({scope: [`customer:${customer.id}`]});
-    });
-  });
-
   describe('post', () => {
     const createParams = {
       supplier_id: 'supplier-a',
       membership_number: 'mem-123'
     };
+    let customer;
+    let validToken;
     let createResponse;
 
     before(() => {
       return specRequest({
-        url: `/customers/${customer.id}/memberships?token=${validToken}`,
+        url: '/customers',
         method: 'POST',
-        payload: createParams
+        payload: {email: `test-${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'}
+      })
+      .then(response => {
+        customer = response.result;
+        validToken = signToken({scope: [`customer:${customer.id}`]});
+      })
+      .then(() => {
+        return specRequest({
+          url: `/customers/${customer.id}/memberships?token=${validToken}`,
+          method: 'POST',
+          payload: createParams
+        });
       })
       .then(response => {
         if (response.statusCode !== 201) {
@@ -56,9 +54,7 @@ describe('memberships', () => {
 
     it('returns membership resource', () => {
       expect(_.omit(createResponse.result, ['id', '_metadata'])).to.eql(createParams);
-      expect(createResponse.result.id).to.match(/^c.*/);
-      expect(createResponse.result.id).to.have.length(25);
-      expect(createResponse.result).to.have.deep.property('_metadata.created');
+      expect(createResponse.result.id).to.match(/^c.{24}/);
       expect(createResponse.result._metadata.created).to.be.instanceOf(Date);
     });
 
@@ -114,6 +110,64 @@ describe('memberships', () => {
           expect(response.result).to.have.property('message', 'child "membership_number" fails because ["membership_number" is required]');
         });
       });
+    });
+  });
+
+  describe('get', () => {
+    const memberships = [
+      {supplier_id: 'supplier-a', membership_number: 'mem-123'},
+      {supplier_id: 'supplier-b', membership_number: 'mem-456'},
+      {supplier_id: 'supplier-c', membership_number: 'mem-789'}
+    ];
+    let customer;
+    let validToken;
+    let getResponse;
+
+    before(() => {
+      return specRequest({
+        url: '/customers',
+        method: 'POST',
+        payload: {email: `test-${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'}
+      })
+      .then(response => {
+        customer = response.result;
+        validToken = signToken({scope: [`customer:${customer.id}`]});
+      })
+      .then(() => {
+        let createPromise = Promise.resolve();
+        memberships.forEach(membership => {
+          createPromise = createPromise.then(() => {
+            return specRequest({
+              url: `/customers/${customer.id}/memberships?token=${validToken}`,
+              method: 'POST',
+              payload: membership
+            });
+          });
+        });
+        return createPromise;
+      })
+      .then(() => specRequest({
+        url: `/customers/${customer.id}/memberships?token=${validToken}`,
+        method: 'GET'
+      }))
+      .then(response => {
+        if (response.statusCode !== 200) {
+          throw new Error(response.result);
+        }
+        getResponse = response;
+      });
+    });
+
+    it('returns http 200', () => {
+      expect(getResponse.statusCode).to.equal(200);
+    });
+
+    it('returns all memberships', () => {
+      getResponse.result.forEach(membership => {
+        expect(membership.id).to.match(/^c.{24}/);
+        expect(membership._metadata.created).to.be.instanceOf(Date);
+      });
+      expect(getResponse.result.map(r => _.omit(r, ['id', '_metadata']))).to.deep.equal(memberships);
     });
   });
 });
