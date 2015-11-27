@@ -89,5 +89,31 @@ describe('memberships', () => {
         expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
       });
     });
+
+    describe('validation', () => {
+      it('requires supplier id', () => {
+        return specRequest({
+          url: `/customers/${customer.id}/memberships?token=${validToken}`,
+          method: 'POST',
+          payload: _.omit(createParams, 'supplier_id')
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result).to.have.property('message', 'child "supplier_id" fails because ["supplier_id" is required]');
+        });
+      });
+
+      it('requires supplier membership number', () => {
+        return specRequest({
+          url: `/customers/${customer.id}/memberships?token=${validToken}`,
+          method: 'POST',
+          payload: _.omit(createParams, 'membership_number')
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result).to.have.property('message', 'child "membership_number" fails because ["membership_number" is required]');
+        });
+      });
+    });
   });
 });
