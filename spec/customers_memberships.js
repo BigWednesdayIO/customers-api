@@ -150,12 +150,35 @@ describe('/customers/{id}/memberships', () => {
       expect(getResponse.statusCode).to.equal(200);
     });
 
-    it('returns all memberships', () => {
+    it('returns all membership resources', () => {
       getResponse.result.forEach(membership => {
         expect(membership.id).to.match(/^c.{24}/);
         expect(membership._metadata.created).to.be.instanceOf(Date);
       });
       expect(getResponse.result.map(r => _.omit(r, ['id', '_metadata']))).to.deep.equal(memberships);
+    });
+
+    it('returns 403 when requesting customer without correct scope', () => {
+      const otherUsersToken = signToken({scope: ['customer:12345']});
+      return specRequest({
+        url: `/customers/${customer.id}/memberships?token=${otherUsersToken}`,
+        method: 'GET'
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(403);
+        expect(response.result.message).match(/Insufficient scope/);
+      });
+    });
+
+    it('returns 404 when customer does not exist', () => {
+      return specRequest({
+        url: `/customers/unknown_customer/memberships?token=${adminToken}`,
+        method: 'GET'
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(404);
+        expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
+      });
     });
   });
 });
