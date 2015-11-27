@@ -1,6 +1,7 @@
 'use strict';
 
 const _ = require('lodash');
+const bluebird = require('bluebird');
 const cuid = require('cuid');
 const expect = require('chai').expect;
 const specRequest = require('./spec_request');
@@ -8,39 +9,40 @@ const signToken = require('./sign_jwt');
 
 const adminToken = signToken({scope: ['admin']});
 
-describe('memberships', () => {
+const createCustomer = () => {
+  return specRequest({
+    url: '/customers',
+    method: 'POST',
+    payload: {email: `test-${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'}
+  })
+  .then(response => ({
+    id: response.result.id,
+    token: signToken({scope: [`customer:${response.result.id}`]})
+  }));
+};
+
+describe('/customers/{id}/memberships', () => {
   describe('post', () => {
     const createParams = {
       supplier_id: 'supplier-a',
       membership_number: 'mem-123'
     };
     let customer;
-    let validToken;
     let createResponse;
 
     before(() => {
-      return specRequest({
-        url: '/customers',
-        method: 'POST',
-        payload: {email: `test-${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'}
-      })
-      .then(response => {
-        customer = response.result;
-        validToken = signToken({scope: [`customer:${customer.id}`]});
-      })
-      .then(() => {
-        return specRequest({
-          url: `/customers/${customer.id}/memberships?token=${validToken}`,
-          method: 'POST',
-          payload: createParams
+      return createCustomer()
+        .then(created => {
+          customer = created;
+          return specRequest({
+            url: `/customers/${customer.id}/memberships?token=${customer.token}`,
+            method: 'POST',
+            payload: createParams
+          });
+        })
+        .then(response => {
+          createResponse = response;
         });
-      })
-      .then(response => {
-        if (response.statusCode !== 201) {
-          return console.error(response.result);
-        }
-        createResponse = response;
-      });
     });
 
     it('returns http 201', () => {
@@ -89,7 +91,7 @@ describe('memberships', () => {
     describe('validation', () => {
       it('requires supplier id', () => {
         return specRequest({
-          url: `/customers/${customer.id}/memberships?token=${validToken}`,
+          url: `/customers/${customer.id}/memberships?token=${customer.token}`,
           method: 'POST',
           payload: _.omit(createParams, 'supplier_id')
         })
@@ -101,7 +103,7 @@ describe('memberships', () => {
 
       it('requires supplier membership number', () => {
         return specRequest({
-          url: `/customers/${customer.id}/memberships?token=${validToken}`,
+          url: `/customers/${customer.id}/memberships?token=${customer.token}`,
           method: 'POST',
           payload: _.omit(createParams, 'membership_number')
         })
@@ -120,40 +122,26 @@ describe('memberships', () => {
       {supplier_id: 'supplier-c', membership_number: 'mem-789'}
     ];
     let customer;
-    let validToken;
     let getResponse;
 
     before(() => {
-      return specRequest({
-        url: '/customers',
-        method: 'POST',
-        payload: {email: `test-${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5'}
-      })
-      .then(response => {
-        customer = response.result;
-        validToken = signToken({scope: [`customer:${customer.id}`]});
-      })
-      .then(() => {
-        let createPromise = Promise.resolve();
-        memberships.forEach(membership => {
-          createPromise = createPromise.then(() => {
-            return specRequest({
-              url: `/customers/${customer.id}/memberships?token=${validToken}`,
-              method: 'POST',
-              payload: membership
-            });
-          });
-        });
-        return createPromise;
+      return createCustomer()
+      .then(created => {
+        customer = created;
+        return bluebird.mapSeries(
+          memberships,
+          membership => specRequest({
+            url: `/customers/${customer.id}/memberships?token=${customer.token}`,
+            method: 'POST',
+            payload: membership
+          })
+        );
       })
       .then(() => specRequest({
-        url: `/customers/${customer.id}/memberships?token=${validToken}`,
+        url: `/customers/${customer.id}/memberships?token=${customer.token}`,
         method: 'GET'
       }))
       .then(response => {
-        if (response.statusCode !== 200) {
-          throw new Error(response.result);
-        }
         getResponse = response;
       });
     });
