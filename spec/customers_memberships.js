@@ -73,18 +73,31 @@ describe('/customers/{id}/memberships', () => {
       });
     });
 
-    it('returns 404 when customer does not exist', () => {
-      return specRequest({
-        url: `/customers/unknown_customer/memberships?token=${adminToken}`,
-        method: 'POST',
-        payload: {
-          supplier_id: 'sdfklsdjflksadjflksdjaflkjsadflksd',
-          membership_number: 'mem-123'
-        }
-      })
-      .then(response => {
-        expect(response.statusCode).to.equal(404);
-        expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
+    describe('admin', () => {
+      it('creates membership for any customer', () => {
+        return specRequest({
+          url: `/customers/${customer.id}/memberships?token=${adminToken}`,
+          method: 'POST',
+          payload: createParams
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(201);
+        });
+      });
+
+      it('returns 404 when customer does not exist', () => {
+        return specRequest({
+          url: `/customers/unknown_customer/memberships?token=${adminToken}`,
+          method: 'POST',
+          payload: {
+            supplier_id: 'sdfklsdjflksadjflksdjaflkjsadflksd',
+            membership_number: 'mem-123'
+          }
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(404);
+          expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
+        });
       });
     });
 
@@ -170,14 +183,26 @@ describe('/customers/{id}/memberships', () => {
       });
     });
 
-    it('returns 404 when customer does not exist', () => {
-      return specRequest({
-        url: `/customers/unknown_customer/memberships?token=${adminToken}`,
-        method: 'GET'
-      })
-      .then(response => {
-        expect(response.statusCode).to.equal(404);
-        expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
+    describe('admin', () => {
+      it('gets memberships for any customer', () => {
+        return specRequest({
+          url: `/customers/${customer.id}/memberships?token=${adminToken}`,
+          method: 'GET'
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(200);
+        });
+      });
+
+      it('returns 404 when customer does not exist', () => {
+        return specRequest({
+          url: `/customers/unknown_customer/memberships?token=${adminToken}`,
+          method: 'GET'
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(404);
+          expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
+        });
       });
     });
   });

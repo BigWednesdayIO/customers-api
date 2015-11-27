@@ -62,8 +62,8 @@ describe('/customers/{id}', () => {
         });
     });
 
-    describe('admin access', () => {
-      it('admin scope can access any customer', () => {
+    describe('admin', () => {
+      it('gets any customer', () => {
         return specRequest({url: `${createResponse.headers.location}?token=${adminToken}`, method: 'GET'})
           .then(response => {
             expect(response.statusCode).to.equal(200);
@@ -71,9 +71,10 @@ describe('/customers/{id}', () => {
       });
 
       it('returns 404 when customer does not exist', () => {
-        return specRequest({url: `/customers/unknown?token=${adminToken}`, method: 'GET'})
+        return specRequest({url: `/customers/unknown_customer?token=${adminToken}`, method: 'GET'})
           .then(response => {
             expect(response.statusCode).to.equal(404);
+            expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
           });
       });
     });
@@ -134,8 +135,8 @@ describe('/customers/{id}', () => {
       });
     });
 
-    describe('admin access', () => {
-      it('admin scope can update any customer', () => {
+    describe('admin', () => {
+      it('updates any customer', () => {
         return specRequest({
           url: `${createResponse.headers.location}?token=${adminToken}`,
           method: 'PUT',
@@ -148,12 +149,13 @@ describe('/customers/{id}', () => {
 
       it('returns 404 when customer does not exist', () => {
         return specRequest({
-          url: `/customers/unknown?token=${adminToken}`,
+          url: `/customers/unknown_customer?token=${adminToken}`,
           method: 'PUT',
           payload: updateCustomerPayload
         })
         .then(response => {
           expect(response.statusCode).to.equal(404);
+          expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
         });
       });
     });

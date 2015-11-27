@@ -7,6 +7,13 @@ const sinon = require('sinon');
 const memberships = require('../lib/membership_repository');
 const dataset = require('../lib/dataset');
 
+const buildRawMembership = membership => ({
+  key: {path: ['Customer', 'customer-a', 'Membership', membership.id]},
+  data: Object.assign(
+    {_metadata_created: membership._metadata.created},
+    _.omit(membership, ['id', '_metadata']))
+});
+
 describe('Membership repository', () => {
   let sandbox;
   const fakeCreatedTimestamp = 1448450346461;
@@ -94,12 +101,7 @@ describe('Membership repository', () => {
 
       sandbox.stub(dataset, 'runQuery', (query, callback) => {
         if (_.eq(query.ancestorKey.path, ['Customer', 'customer-a'])) {
-          callback(null, existingMemberships.map(membership => ({
-            key: {path: ['Customer', 'customer-a', 'Membership', membership.id]},
-            data: Object.assign({
-              _metadata_created: membership._metadata.created
-            }, _.omit(membership, ['id', '_metadata']))
-          })));
+          callback(null, existingMemberships.map(buildRawMembership));
         }
 
         callback(null, []);
@@ -119,6 +121,55 @@ describe('Membership repository', () => {
         .find('unknown')
         .then(memberships => {
           expect(memberships).to.eql([]);
+        });
+    });
+  });
+
+  describe('get', () => {
+    const existingMembership = {
+      id: 'membership-a',
+      supplier_id: 'supplier-a',
+      membership_number: '0903309455',
+      _metadata: {created: new Date()}
+    };
+
+    beforeEach(() => {
+      sandbox.stub(dataset, 'get', (args, callback) => {
+        if (args.path[1] === 'customer-a' && args.path[3] === 'membership-a') {
+          return callback(null, buildRawMembership(existingMembership));
+        }
+
+        callback();
+      });
+    });
+
+    it('returns membership by id', () => {
+      return memberships
+        .get('customer-a', 'membership-a')
+        .then(membership => {
+          expect(membership).to.eql(existingMembership);
+        });
+    });
+
+    it('errors on non-existent customer', () => {
+      return memberships
+        .get('unknown', 'membership-a')
+        .then(() => {
+          throw new Error('Error expected');
+        }, err => {
+          expect(err.name).to.equal('EntityNotFoundError');
+          expect(err instanceof Error).to.equal(true);
+        });
+    });
+
+    it('errors on non-existent membership', () => {
+      return memberships
+        .get('customer-a', 'unknown')
+        .then(() => {
+          throw new Error('Error expected');
+        }, err => {
+          expect(err.name).to.equal('EntityNotFoundError');
+          expect(err instanceof Error).to.equal(true);
         });
     });
   });
