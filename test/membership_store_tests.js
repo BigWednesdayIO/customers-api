@@ -16,11 +16,48 @@ const buildRawMembership = membership => ({
 
 describe('Membership repository', () => {
   let sandbox;
+  let saveStub;
+  let deleteStub;
+  let keySpy;
+
   const fakeCreatedTimestamp = 1448450346461;
+
+  const existingMemberships = [{
+    id: 'membership-a',
+    supplier_id: 'supplier-a',
+    membership_number: 'membership-a',
+    _metadata: {created: new Date()}
+  }, {
+    id: 'membership-b',
+    supplier_id: 'supplier-b',
+    membership_number: 'membership-b',
+    _metadata: {created: new Date()}
+  }];
 
   beforeEach(() => {
     sandbox = sinon.sandbox.create();
     sandbox.useFakeTimers(fakeCreatedTimestamp);
+
+    saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
+      callback();
+    });
+
+    keySpy = sandbox.spy(dataset, 'key');
+
+    sandbox.stub(dataset, 'get', (args, callback) => {
+      if (args.path[1] === 'customer-a') {
+        const membership = _.find(existingMemberships, {id: _.last(args.path)});
+        if (membership) {
+          return callback(null, buildRawMembership(membership));
+        }
+      }
+
+      callback();
+    });
+
+    deleteStub = sandbox.stub(dataset, 'delete', (args, callback) => {
+      callback();
+    });
   });
 
   afterEach(() => {
@@ -29,22 +66,14 @@ describe('Membership repository', () => {
 
   describe('create', () => {
     const createParams = {
-      supplier_id: 'supplier-a',
-      membership_number: 'mem-a'
+      supplier_id: 'supplier-c',
+      membership_number: 'membership-c'
     };
 
-    let saveStub;
-    let keySpy;
     let createdMembership;
 
     beforeEach(() => {
-      saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
-        callback();
-      });
-
-      keySpy = sandbox.spy(dataset, 'key');
-
-      return memberships.create('cust-a', createParams)
+      return memberships.create('customer-a', createParams)
         .then(result => {
           createdMembership = result;
         });
@@ -72,18 +101,6 @@ describe('Membership repository', () => {
   });
 
   describe('find', () => {
-    const existingMemberships = [{
-      id: 'membership-a',
-      supplier_id: 'supplier-a',
-      membership_number: '0903309455',
-      _metadata: {created: new Date()}
-    }, {
-      id: 'membership-b',
-      supplier_id: 'supplier-b',
-      membership_number: '9834908493834',
-      _metadata: {created: new Date()}
-    }];
-
     beforeEach(() => {
       sandbox.stub(dataset, 'createQuery', kind => {
         return {
@@ -126,28 +143,11 @@ describe('Membership repository', () => {
   });
 
   describe('get', () => {
-    const existingMembership = {
-      id: 'membership-a',
-      supplier_id: 'supplier-a',
-      membership_number: '0903309455',
-      _metadata: {created: new Date()}
-    };
-
-    beforeEach(() => {
-      sandbox.stub(dataset, 'get', (args, callback) => {
-        if (args.path[1] === 'customer-a' && args.path[3] === 'membership-a') {
-          return callback(null, buildRawMembership(existingMembership));
-        }
-
-        callback();
-      });
-    });
-
     it('returns membership by id', () => {
       return memberships
         .get('customer-a', 'membership-a')
         .then(membership => {
-          expect(membership).to.eql(existingMembership);
+          expect(membership).to.eql(existingMemberships[0]);
         });
     });
 
@@ -175,40 +175,14 @@ describe('Membership repository', () => {
   });
 
   describe('update', () => {
-    let saveStub;
     let updatedMembership;
 
-    const existingMembership = {
-      id: 'membership-a',
-      supplier_id: 'supplier-a',
-      membership_number: '0903309455',
-      _metadata: {created: new Date()}
-    };
     const updateParams = {
       supplier_id: 'supplier-b',
       membership_number: '088777364'
     };
 
     beforeEach(() => {
-      sandbox.stub(dataset, 'get', (args, callback) => {
-        const membershipAPath = ['Customer', 'customer-a', 'Membership', 'membership-a'];
-
-        if (_.eq(args.path, membershipAPath)) {
-          return callback(null, {
-            key: {path: membershipAPath},
-            data: Object.assign(
-              {_metadata_created: existingMembership._metadata.created},
-              _.omit(existingMembership, ['id', '_metadata']))
-          });
-        }
-
-        callback();
-      });
-
-      saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
-        callback();
-      });
-
       return memberships
         .update('customer-a', 'membership-a', updateParams)
         .then(membership => {
@@ -218,8 +192,9 @@ describe('Membership repository', () => {
 
     it('persists updated attributes', () => {
       sinon.assert.calledOnce(saveStub);
+      const expectedKey = keySpy.returnValues[0];
       sinon.assert.calledWith(saveStub, sinon.match({
-        key: dataset.key(['Customer', 'customer-a', 'Membership', 'membership-a']),
+        key: expectedKey,
         method: 'update',
         data: updateParams
       }));
@@ -227,8 +202,8 @@ describe('Membership repository', () => {
 
     it('returns updated resource', () => {
       expect(updatedMembership).to.eql(Object.assign({
-        id: existingMembership.id,
-        _metadata: existingMembership._metadata
+        id: existingMemberships[0].id,
+        _metadata: existingMemberships[0]._metadata
       }, updateParams));
     });
 
@@ -256,33 +231,13 @@ describe('Membership repository', () => {
   });
 
   describe('delete', () => {
-    let deleteStub;
-
-    beforeEach(() => {
-      sandbox.stub(dataset, 'get', (args, callback) => {
-        const membershipAPath = ['Customer', 'customer-a', 'Membership', 'membership-a'];
-
-        if (_.eq(args.path, membershipAPath)) {
-          return callback(null, {key: membershipAPath, data: {}});
-        }
-
-        callback();
-      });
-
-      deleteStub = sandbox.stub(dataset, 'delete', (args, callback) => {
-        callback();
-      });
-    });
-
     it('deletes membership', () => {
       return memberships
         .delete('customer-a', 'membership-a')
         .then(() => {
           sinon.assert.calledOnce(deleteStub);
-          sinon.assert.calledWith(
-            deleteStub,
-            sinon.match(dataset.key(['Customer', 'customer-a', 'Membership', 'membership-a']))
-          );
+          const expectedKey = keySpy.returnValues[0];
+          sinon.assert.calledWith(deleteStub, expectedKey);
         });
     });
 
