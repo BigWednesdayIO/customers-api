@@ -9,42 +9,35 @@ const signToken = require('./sign_jwt');
 const adminToken = signToken({scope: ['admin']});
 
 describe('/customers/{id}', () => {
-  const createCustomerPayload = {
+  const createParams = () => ({
     email: `test-${cuid()}@bigwednesday.io`,
     password: '8u{F0*W1l5',
     vat_number: '12345',
     line_of_business: 'Eating & Drinking Out'
-  };
-
-  let createResponse;
-  let validToken;
-
-  before(() => {
-    return specRequest({
-      url: '/customers',
-      method: 'POST',
-      payload: createCustomerPayload
-    })
-    .then(response => {
-      createResponse = response;
-      expect(response.statusCode).to.equal(201);
-      validToken = signToken({scope: [`customer:${createResponse.result.id}`]});
-    });
   });
 
   describe('get', () => {
+    let createResponse;
+    let validToken;
     let getResponse;
 
     before(() => {
       return specRequest({
-        url: createResponse.headers.location,
-        method: 'GET',
-        headers: {authorization: validToken}
+        url: '/customers',
+        method: 'POST',
+        payload: createParams()
       })
       .then(response => {
-        if (response.statusCode !== 200) {
-          return console.error(response.result);
-        }
+        createResponse = response;
+        validToken = signToken({scope: [`customer:${createResponse.result.id}`]});
+
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'GET',
+          headers: {authorization: validToken}
+        });
+      })
+      .then(response => {
         getResponse = response;
       });
     });
@@ -97,24 +90,33 @@ describe('/customers/{id}', () => {
   });
 
   describe('put', () => {
+    let createResponse;
+    let validToken;
+    let updateResponse;
+
     const updateCustomerPayload = {
       email: `test-${cuid()}@bigwednesday.io`,
       vat_number: 'HY7UJL'
     };
 
-    let updateResponse;
-
     before(() => {
       return specRequest({
-        url: createResponse.headers.location,
-        method: 'PUT',
-        payload: updateCustomerPayload,
-        headers: {authorization: validToken}
+        url: '/customers',
+        method: 'POST',
+        payload: createParams()
       })
       .then(response => {
-        if (response.statusCode !== 200) {
-          return console.error(response.result);
-        }
+        createResponse = response;
+        validToken = signToken({scope: [`customer:${createResponse.result.id}`]});
+
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'PUT',
+          payload: updateCustomerPayload,
+          headers: {authorization: validToken}
+        });
+      })
+      .then(response => {
         updateResponse = response;
       });
     });

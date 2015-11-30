@@ -25,10 +25,6 @@ describe('/customers/authenticate', () => {
         }
       })
       .then(response => {
-        if (response.statusCode !== 201) {
-          return console.error(response.result);
-        }
-
         testCustomerId = response.result.id;
       })
       .then(() => {
@@ -39,10 +35,10 @@ describe('/customers/authenticate', () => {
             email: testEmail,
             password: testPassword
           }
-        })
-        .then(response => {
-          authResponse = response;
         });
+      })
+      .then(response => {
+        authResponse = response;
       });
     });
 
