@@ -33,7 +33,7 @@ describe('Customer repository', () => {
     });
 
     sandbox.stub(dataset, 'get', (args, callback) => {
-      if (_.last(args.path) === 'customer-a') {
+      if (_.last(args.path) === existingCustomer.id) {
         return callback(null, {
           key: {path: ['Customer', existingCustomer.id]},
           data: Object.assign({
@@ -169,7 +169,7 @@ describe('Customer repository', () => {
   describe('get', () => {
     it('returns customer by id', () => {
       return customers
-        .get('customer-a')
+        .get(existingCustomer.id)
         .then(customer => {
           expect(customer).to.eql(existingCustomer);
         });
@@ -202,7 +202,7 @@ describe('Customer repository', () => {
       });
 
       return customers
-        .update('customer-a', updateParameters)
+        .update(existingCustomer.id, updateParameters)
         .then(customer => {
           updatedCustomer = customer;
         });
@@ -211,7 +211,7 @@ describe('Customer repository', () => {
     it('persists updated attributes', () => {
       sinon.assert.calledOnce(saveStub);
       sinon.assert.calledWith(saveStub, sinon.match({
-        key: dataset.key(['Customer', 'customer-a']),
+        key: dataset.key(['Customer', existingCustomer.id]),
         method: 'update',
         data: updateParameters
       }));
