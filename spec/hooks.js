@@ -5,14 +5,14 @@ const nock = require('nock');
 const dataset = require('../lib/dataset');
 const auth0Client = require('../lib/auth0_client');
 
-const deleteDataStoreData = () => {
-  const query = dataset.createQuery('Customer');
+const deleteDataOfKind = kind => {
+  const query = dataset.createQuery(kind);
 
   return new Promise((resolve, reject) => {
     dataset.runQuery(query, (err, res) => {
       if (err) {
         console.error(err);
-        console.log('Error deleting Customer data');
+        console.log(`Error deleting ${kind} data`);
 
         reject(err);
       }
@@ -21,7 +21,7 @@ const deleteDataStoreData = () => {
       dataset.delete(keys, err => {
         if (err) {
           console.error(err);
-          console.log('Error deleting Customer data');
+          console.log(`Error deleting ${kind} data`);
 
           reject(err);
         }
@@ -30,6 +30,11 @@ const deleteDataStoreData = () => {
       });
     });
   });
+};
+
+const deleteDataStoreData = () => {
+  return deleteDataOfKind('Membership')
+    .then(() => deleteDataOfKind('Customer'));
 };
 
 before(() => {
@@ -56,7 +61,6 @@ after(done => {
   });
 
   createdAuth0.forEach(id => {
-    console.log('Deleting user', id);
     auth0Client.deleteUser(id, auth0UserDeleted);
   });
 });

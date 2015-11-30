@@ -32,8 +32,9 @@ describe('authentication', () => {
           const token = signToken({}, {expiresIn: '0'});
 
           return specRequest({
-            url: `${route.path}?token=${token}`,
-            method: route.method
+            url: route.path,
+            method: route.method,
+            headers: {authorization: token}
           })
           .then(response => {
             expect(response.statusCode).to.equal(401);
@@ -45,8 +46,9 @@ describe('authentication', () => {
           const token = signToken({}, {issuer: 'http://unknown_issuer/'});
 
           return specRequest({
-            url: `${route.path}?token=${token}`,
-            method: route.method
+            url: route.path,
+            method: route.method,
+            headers: {authorization: token}
           })
           .then(response => {
             expect(response.statusCode).to.equal(401);
@@ -58,8 +60,9 @@ describe('authentication', () => {
           const token = signToken({}, {audience: 'some_audience'});
 
           return specRequest({
-            url: `${route.path}?token=${token}`,
-            method: route.method
+            url: route.path,
+            method: route.method,
+            headers: {authorization: token}
           })
           .then(response => {
             expect(response.statusCode).to.equal(401);
@@ -71,8 +74,9 @@ describe('authentication', () => {
           const token = signToken({}, {algorithm: 'HS512'});
 
           return specRequest({
-            url: `${route.path}?token=${token}`,
-            method: route.method
+            url: route.path,
+            method: route.method,
+            headers: {authorization: token}
           })
           .then(response => {
             expect(response.statusCode).to.equal(401);

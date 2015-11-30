@@ -18,7 +18,6 @@ describe('/customers', () => {
     before(function () {
       this.timeout(5000);
 
-      createUserResponse = undefined;
       return specRequest({
         url: '/customers',
         method: 'POST',

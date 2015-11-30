@@ -5,14 +5,46 @@ const expect = require('chai').expect;
 const sinon = require('sinon');
 
 const auth0Client = require('../lib/auth0_client');
-const customerRepository = require('../lib/customer_repository');
+const customers = require('../lib/stores/customer_store');
 const dataset = require('../lib/dataset');
 
 describe('Customer repository', () => {
+  const fakeCreatedTimestamp = 1448450346461;
   let sandbox;
+  let saveStub;
+
+  const existingCustomer = {
+    id: 'customer-a',
+    email: 'existing@bigwednesday.io',
+    line_of_business: 'Eating & Drinking Out',
+    _metadata: {created: new Date()}
+  };
+  const fakeAuth0Id = 'auth0|12345';
 
   beforeEach(() => {
     sandbox = sinon.sandbox.create();
+    sandbox.useFakeTimers(fakeCreatedTimestamp);
+
+    saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
+      if (args.data.email === 'fail_to_persist@bigwednesday.io') {
+        return callback('Cannot save');
+      }
+      callback();
+    });
+
+    sandbox.stub(dataset, 'get', (args, callback) => {
+      if (_.last(args.path) === existingCustomer.id) {
+        return callback(null, {
+          key: {path: ['Customer', existingCustomer.id]},
+          data: Object.assign({
+            _hidden: {auth0Id: fakeAuth0Id},
+            _metadata_created: existingCustomer._metadata.created
+          }, _.omit(existingCustomer, ['id', '_metadata']))
+        });
+      }
+
+      callback();
+    });
   });
 
   afterEach(() => {
@@ -22,7 +54,6 @@ describe('Customer repository', () => {
   describe('create', () => {
     let createUserStub;
     let deleteUserStub;
-    let saveStub;
     let keySpy;
     let createdCustomer;
 
@@ -55,14 +86,7 @@ describe('Customer repository', () => {
 
       keySpy = sandbox.spy(dataset, 'key');
 
-      saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
-        if (args.data.email === 'fail_to_persist@bigwednesday.io') {
-          return callback('Cannot save');
-        }
-        callback();
-      });
-
-      return customerRepository.create(createCustomerParams)
+      return customers.create(createCustomerParams)
         .then(result => {
           createdCustomer = result;
         });
@@ -92,7 +116,7 @@ describe('Customer repository', () => {
     });
 
     it('removes customer from auth0 if persistence fails', () => {
-      return customerRepository.create({email: 'fail_to_persist@bigwednesday.io', password: '12345'})
+      return customers.create({email: 'fail_to_persist@bigwednesday.io', password: '12345'})
         .then(() => {
           throw new Error('Create customer should fail');
         }, () => {
@@ -101,17 +125,28 @@ describe('Customer repository', () => {
         });
     });
 
+    it('returns customer attributes', () => {
+      const attributeParams = _.omit(createCustomerParams, 'password');
+      const createdAttributes = _.omit(createdCustomer, ['id', '_metadata']);
+      expect(createdAttributes).to.eql(attributeParams);
+    });
+
     it('returns id', () => {
       expect(createdCustomer.id).to.match(/^c.*/);
       expect(createdCustomer.id).to.have.length(25);
     });
 
-    it('returns email', () => {
-      expect(createdCustomer.email).to.equal('test@bigwednesday.io');
+    it('does not return password', () => {
+      expect(createdCustomer.password).not.to.be.ok;
+    });
+
+    it('returns created date', () => {
+      expect(createdCustomer._metadata).to.be.ok;
+      expect(createdCustomer._metadata.created).to.eql(new Date(fakeCreatedTimestamp));
     });
 
     it('errors when customer exists', () => {
-      return customerRepository.create({email: 'existing@bigwednesday.io', password: '12345'})
+      return customers.create({email: 'existing@bigwednesday.io', password: '12345'})
         .then(() => {
           throw new Error('Create customer should fail for existing user');
         }, err => {
@@ -121,7 +156,7 @@ describe('Customer repository', () => {
     });
 
     it('errors for password to weak', () => {
-      return customerRepository.create({email: 'test@bigwednesday.io', password: 'weak'})
+      return customers.create({email: 'test@bigwednesday.io', password: 'weak'})
         .then(() => {
           throw new Error('Create customer should fail');
         }, err => {
@@ -132,88 +167,42 @@ describe('Customer repository', () => {
   });
 
   describe('get', () => {
-    const existingCustomer = {
-      id: 'A',
-      email: 'existing@bigwednesday.io',
-      _metadata: {created: new Date()}
-    };
-
-    beforeEach(() => {
-      sandbox.stub(dataset, 'get', (args, callback) => {
-        if (args.path[1] === 'A') {
-          return callback(null, {
-            key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
-            data: Object.assign({_metadata_created: existingCustomer._metadata.created}, _.omit(existingCustomer, 'id'))
-          });
-        }
-
-        callback();
-      });
-    });
-
     it('returns customer by id', () => {
-      return customerRepository
-        .get('A')
+      return customers
+        .get(existingCustomer.id)
         .then(customer => {
           expect(customer).to.eql(existingCustomer);
         });
     });
 
     it('errors on non-existent customer', () => {
-      return customerRepository
+      return customers
         .get('unknown')
         .then(() => {
           throw new Error('Error expected');
         }, err => {
-          expect(err.name).to.equal('CustomerNotFoundError');
+          expect(err.name).to.equal('EntityNotFoundError');
           expect(err instanceof Error).to.equal(true);
         });
     });
   });
 
   describe('update', () => {
-    let saveStub;
     let updateUserEmailStub;
     let updatedCustomer;
 
-    const fakeAuth0Id = 'auth0|12345';
-
-    const existingCustomer = {
-      id: 'A',
-      email: 'existing@bigwednesday.io',
-      line_of_business: 'Eating & Drinking Out',
-      _metadata: {created: new Date()}
-    };
     const updateParameters = {
       email: 'updated@bigwednesday.io',
       vat_number: 'UHYGFL'
     };
 
     beforeEach(() => {
-      sandbox.stub(dataset, 'get', (args, callback) => {
-        if (args.path[1] === 'A') {
-          return callback(null, {
-            key: {namespace: undefined, path: ['Customer', existingCustomer.id]},
-            data: Object.assign({
-              _hidden: {auth0Id: fakeAuth0Id},
-              _metadata_created: existingCustomer._metadata.created
-            }, _.omit(existingCustomer, 'id'))
-          });
-        }
-
-        callback();
-      });
-
-      saveStub = sandbox.stub(dataset, 'save', (args, callback) => {
-        callback();
-      });
-
       updateUserEmailStub = sandbox.stub(auth0Client, 'updateUserEmail', (id, email, verify, callback) => {
         callback();
       });
 
-      return customerRepository
-        .update('A', updateParameters)
+      return customers
+        .update(existingCustomer.id, updateParameters)
         .then(customer => {
           updatedCustomer = customer;
         });
@@ -222,7 +211,7 @@ describe('Customer repository', () => {
     it('persists updated attributes', () => {
       sinon.assert.calledOnce(saveStub);
       sinon.assert.calledWith(saveStub, sinon.match({
-        key: dataset.key(['Customer', 'A']),
+        key: dataset.key(['Customer', existingCustomer.id]),
         method: 'update',
         data: updateParameters
       }));
@@ -246,12 +235,12 @@ describe('Customer repository', () => {
     });
 
     it('errors on non-existent customer', () => {
-      return customerRepository
-        .update('Z', updateParameters)
+      return customers
+        .update('unknown-customer', updateParameters)
         .then(() => {
           throw new Error('Error expected');
         }, err => {
-          expect(err.name).to.equal('CustomerNotFoundError');
+          expect(err.name).to.equal('EntityNotFoundError');
           expect(err instanceof Error).to.equal(true);
         });
     });

@@ -35,6 +35,16 @@ module.exports = function (options) {
               return reject(new Error(`${method} for route ${route} is undocumented.`));
             }
 
+            const statusResponse = swaggerMethod.responses[response.statusCode];
+
+            if (response.statusCode !== 204 && !statusResponse) {
+              return reject(new Error(`${response.statusCode} response for route ${route} is undocumented.`));
+            }
+
+            if (statusResponse && statusResponse.description.length === 0) {
+              return reject(new Error(`${response.statusCode} response for route ${route} is missing description.`));
+            }
+
             resolve(response);
           });
         });

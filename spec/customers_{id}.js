@@ -9,40 +9,37 @@ const signToken = require('./sign_jwt');
 const adminToken = signToken({scope: ['admin']});
 
 describe('/customers/{id}', () => {
-  const createCustomerPayload = {
+  const createParams = () => ({
     email: `test-${cuid()}@bigwednesday.io`,
     password: '8u{F0*W1l5',
     vat_number: '12345',
     line_of_business: 'Eating & Drinking Out'
-  };
-
-  let createResponse;
-  let validToken;
-
-  before(() => {
-    return specRequest({
-      url: '/customers',
-      method: 'POST',
-      payload: createCustomerPayload
-    })
-    .then(response => {
-      createResponse = response;
-      expect(response.statusCode).to.equal(201);
-      validToken = signToken({scope: [`customer:${createResponse.result.id}`]});
-    });
   });
 
   describe('get', () => {
+    let createResponse;
+    let validToken;
     let getResponse;
 
     before(() => {
-      return specRequest({url: `${createResponse.headers.location}?token=${validToken}`, method: 'GET'})
-        .then(response => {
-          if (response.statusCode !== 200) {
-            return console.error(response.result);
-          }
-          getResponse = response;
+      return specRequest({
+        url: '/customers',
+        method: 'POST',
+        payload: createParams()
+      })
+      .then(response => {
+        createResponse = response;
+        validToken = signToken({scope: [`customer:${createResponse.result.id}`]});
+
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'GET',
+          headers: {authorization: validToken}
         });
+      })
+      .then(response => {
+        getResponse = response;
+      });
     });
 
     it('returns http 200 when customer is found', () => {
@@ -55,48 +52,71 @@ describe('/customers/{id}', () => {
 
     it('returns 403 when requesting customer without correct scope', () => {
       const otherUsersToken = signToken({scope: ['customer:12345']});
-      return specRequest({url: `${createResponse.headers.location}?token=${otherUsersToken}`, method: 'GET'})
-        .then(response => {
-          expect(response.statusCode).to.equal(403);
-          expect(response.result.message).match(/Insufficient scope/);
-        });
+      return specRequest({
+        url: createResponse.headers.location,
+        method: 'GET',
+        headers: {authorization: otherUsersToken}
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(403);
+        expect(response.result.message).match(/Insufficient scope/);
+      });
     });
 
-    describe('admin access', () => {
-      it('admin scope can access any customer', () => {
-        return specRequest({url: `${createResponse.headers.location}?token=${adminToken}`, method: 'GET'})
-          .then(response => {
-            expect(response.statusCode).to.equal(200);
-          });
+    describe('admin', () => {
+      it('gets any customer', () => {
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'GET',
+          headers: {authorization: adminToken}
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(200);
+        });
       });
 
       it('returns 404 when customer does not exist', () => {
-        return specRequest({url: `/customers/unknown?token=${adminToken}`, method: 'GET'})
-          .then(response => {
-            expect(response.statusCode).to.equal(404);
-          });
+        return specRequest({
+          url: '/customers/unknown_customer',
+          method: 'GET',
+          headers: {authorization: adminToken}
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(404);
+          expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
+        });
       });
     });
   });
 
   describe('put', () => {
+    let createResponse;
+    let validToken;
+    let updateResponse;
+
     const updateCustomerPayload = {
       email: `test-${cuid()}@bigwednesday.io`,
       vat_number: 'HY7UJL'
     };
 
-    let updateResponse;
-
     before(() => {
       return specRequest({
-        url: `${createResponse.headers.location}?token=${validToken}`,
-        method: 'PUT',
-        payload: updateCustomerPayload
+        url: '/customers',
+        method: 'POST',
+        payload: createParams()
       })
       .then(response => {
-        if (response.statusCode !== 200) {
-          return console.error(response.result);
-        }
+        createResponse = response;
+        validToken = signToken({scope: [`customer:${createResponse.result.id}`]});
+
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'PUT',
+          payload: updateCustomerPayload,
+          headers: {authorization: validToken}
+        });
+      })
+      .then(response => {
         updateResponse = response;
       });
     });
@@ -115,18 +135,23 @@ describe('/customers/{id}', () => {
     });
 
     it('persists updates', () => {
-      return specRequest({url: `${createResponse.headers.location}?token=${validToken}`, method: 'GET'})
-        .then(getResponse => {
-          expect(updateResponse.result).to.eql(getResponse.result);
-        });
+      return specRequest({
+        url: createResponse.headers.location,
+        method: 'GET',
+        headers: {authorization: validToken}
+      })
+      .then(getResponse => {
+        expect(updateResponse.result).to.eql(getResponse.result);
+      });
     });
 
     it('returns 403 when updating customer without correct scope', () => {
       const otherUsersToken = signToken({scope: ['customer:12345']});
       return specRequest({
-        url: `${createResponse.headers.location}?token=${otherUsersToken}`,
+        url: createResponse.headers.location,
         method: 'PUT',
-        payload: updateCustomerPayload
+        payload: updateCustomerPayload,
+        headers: {authorization: otherUsersToken}
       })
       .then(response => {
         expect(response.statusCode).to.equal(403);
@@ -134,12 +159,13 @@ describe('/customers/{id}', () => {
       });
     });
 
-    describe('admin access', () => {
-      it('admin scope can update any customer', () => {
+    describe('admin', () => {
+      it('updates any customer', () => {
         return specRequest({
-          url: `${createResponse.headers.location}?token=${adminToken}`,
+          url: createResponse.headers.location,
           method: 'PUT',
-          payload: updateCustomerPayload
+          payload: updateCustomerPayload,
+          headers: {authorization: adminToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(200);
@@ -148,12 +174,14 @@ describe('/customers/{id}', () => {
 
       it('returns 404 when customer does not exist', () => {
         return specRequest({
-          url: `/customers/unknown?token=${adminToken}`,
+          url: '/customers/unknown_customer',
           method: 'PUT',
-          payload: updateCustomerPayload
+          payload: updateCustomerPayload,
+          headers: {authorization: adminToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(404);
+          expect(response.result).to.have.property('message', 'Customer "unknown_customer" not found.');
         });
       });
     });
@@ -161,9 +189,10 @@ describe('/customers/{id}', () => {
     describe('validation', () => {
       it('rejects id', () => {
         return specRequest({
-          url: `${createResponse.headers.location}?token=${validToken}`,
+          url: createResponse.headers.location,
           method: 'PUT',
-          payload: Object.assign({id: 'A'}, updateCustomerPayload)
+          payload: Object.assign({id: 'A'}, updateCustomerPayload),
+          headers: {authorization: validToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
@@ -173,9 +202,10 @@ describe('/customers/{id}', () => {
 
       it('requires email address', () => {
         return specRequest({
-          url: `${createResponse.headers.location}?token=${validToken}`,
+          url: createResponse.headers.location,
           method: 'PUT',
-          payload: _.omit(updateCustomerPayload, 'email')
+          payload: _.omit(updateCustomerPayload, 'email'),
+          headers: {authorization: validToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
@@ -185,9 +215,10 @@ describe('/customers/{id}', () => {
 
       it('validates email address format', () => {
         return specRequest({
-          url: `${createResponse.headers.location}?token=${validToken}`,
+          url: createResponse.headers.location,
           method: 'PUT',
-          payload: _.defaults({email: 'bigwednesday.io', updateCustomerPayload})
+          payload: _.defaults({email: 'bigwednesday.io', updateCustomerPayload}),
+          headers: {authorization: validToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
@@ -197,9 +228,10 @@ describe('/customers/{id}', () => {
 
       it('rejects _metadata', () => {
         return specRequest({
-          url: `${createResponse.headers.location}?token=${validToken}`,
+          url: createResponse.headers.location,
           method: 'PUT',
-          payload: Object.assign({_metadata: {created: new Date()}}, updateCustomerPayload)
+          payload: Object.assign({_metadata: {created: new Date()}}, updateCustomerPayload),
+          headers: {authorization: validToken}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
