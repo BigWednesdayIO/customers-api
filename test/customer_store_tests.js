@@ -75,7 +75,7 @@ describe('Customer repository', () => {
         callback(null, {
           user_id: 'auth0|987654321',
           email: params.email,
-          bigwednesday_id: params.bigwednesday_id,
+          customer_id: params.customer_id,
           scope: params.scope
         });
       });
@@ -97,7 +97,7 @@ describe('Customer repository', () => {
       sinon.assert.calledWith(
         createUserStub,
         sinon.match(Object.assign({
-          bigwednesday_id: createdCustomer.id,
+          customer_id: createdCustomer.id,
           scope: [`customer:${createdCustomer.id}`]
         }, createCustomerParams))
       );
