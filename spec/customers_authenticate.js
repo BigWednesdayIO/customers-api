@@ -64,7 +64,7 @@ describe('/customers/authenticate', () => {
           issuer: `https://${process.env.AUTH0_DOMAIN}/`
         });
 
-      expect(token.bigwednesday_id).to.equal(authResponse.result.id);
+      expect(token.customer_id).to.equal(authResponse.result.id);
       expect(_.includes(token.scope, `customer:${testCustomerId}`)).to.be.ok;
     });
 
