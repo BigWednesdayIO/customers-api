@@ -8,14 +8,11 @@ const signToken = require('./sign_jwt');
 
 const adminToken = signToken({scope: ['admin']});
 
+const membershipParameters = require('./parameters/membership');
+
 describe('/customers/{customerId}/memberships/{membershipId}', () => {
   let customer;
   let validToken;
-
-  const createParams = {
-    supplier_id: 'supplier-a',
-    membership_number: 'mem-123'
-  };
 
   before(() => {
     return specRequest({
@@ -37,7 +34,7 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
       return specRequest({
         url: `/customers/${customer.id}/memberships`,
         method: 'POST',
-        payload: createParams,
+        payload: membershipParameters,
         headers: {authorization: validToken}
       })
       .then(response => {
@@ -117,16 +114,13 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
     let existingMembership;
     let updateResponse;
 
-    const updateParams = {
-      supplier_id: 'supplier-b',
-      membership_number: 'mem-456'
-    };
+    const updateParams = Object.assign({}, membershipParameters, {membership_number: 'mem-456'});
 
     before(() => {
       return specRequest({
         url: `/customers/${customer.id}/memberships`,
         method: 'POST',
-        payload: createParams,
+        payload: membershipParameters,
         headers: {authorization: validToken}
       })
       .then(response => {
@@ -248,6 +242,19 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
           expect(response.result).to.have.property('message', 'child "membership_number" fails because ["membership_number" is required]');
         });
       });
+
+      it('rejects request when price_adjustment_group_id is not a string', () => {
+        return specRequest({
+          url: `/customers/${customer.id}/memberships/${existingMembership.id}`,
+          method: 'PUT',
+          payload: Object.assign({}, updateParams, {price_adjustment_group_id: 1}),
+          headers: {authorization: validToken}
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result).to.have.property('message', 'child "price_adjustment_group_id" fails because ["price_adjustment_group_id" must be a string]');
+        });
+      });
     });
   });
 
@@ -258,7 +265,7 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
       return specRequest({
         url: `/customers/${customer.id}/memberships`,
         method: 'POST',
-        payload: createParams,
+        payload: membershipParameters,
         headers: {authorization: validToken}
       })
       .then(response => {
@@ -305,7 +312,7 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
         return specRequest({
           url: `/customers/${customer.id}/memberships`,
           method: 'POST',
-          payload: createParams,
+          payload: membershipParameters,
           headers: {authorization: validToken}
         })
         .then(response => {

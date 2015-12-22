@@ -109,6 +109,9 @@ describe('Membership repository', () => {
             this.ancestorKey = key;
             return this;
           },
+          filter(field, value) {
+            this.filtered = {field, value};
+          },
           order(order) {
             this.sortOrder = order;
             return this;
@@ -118,14 +121,20 @@ describe('Membership repository', () => {
 
       sandbox.stub(dataset, 'runQuery', (query, callback) => {
         if (_.eq(query.ancestorKey.path, ['Customer', 'customer-a'])) {
-          callback(null, existingMemberships.map(buildRawMembership));
+          let results = existingMemberships;
+
+          if (query.filtered) {
+            results = results.filter(r => r[query.filtered.field.replace(' =', '')] === query.filtered.value);
+          }
+
+          callback(null, results.map(buildRawMembership));
         }
 
         callback(null, []);
       });
     });
 
-    it('returns membership by id', () => {
+    it('returns memberships by customer id', () => {
       return memberships
         .find('customer-a')
         .then(memberships => {
@@ -133,7 +142,12 @@ describe('Membership repository', () => {
         });
     });
 
-    it('returns empty array for non-existent customer', () => {
+    it('returns memberships by customer id and supplier id', () =>
+      memberships
+        .find('customer-a', 'supplier-b')
+        .then(memberships => expect(memberships).to.eql(existingMemberships.slice(1))));
+
+    it('returns empty array when no memberships are found', () => {
       return memberships
         .find('unknown')
         .then(memberships => {

@@ -13,14 +13,13 @@ dependencies:
     - '~/docker'
   override:
     - deploy_scripts/install_deployment_tools.sh
-    - sudo pip install -U docker-compose
     - if [[ -e ~/docker/node.tar ]]; then docker load -i ~/docker/node.tar; fi
     - if [[ -e ~/docker/gcd.tar ]]; then docker load -i ~/docker/gcd.tar; fi
-    - docker pull node:5.1.0
-    - docker pull risaacson/gcd-local:v1beta2-rev1-3.0.0
+    - docker pull node:5.3.0
+    - docker pull risaacson/gcd-local:v1beta2-rev1-3.0.2
     - mkdir -p ~/docker
-    - docker save node:5.1.0 > ~/docker/node.tar
-    - docker save risaacson/gcd-local:v1beta2-rev1-3.0.0 > ~/docker/gcd.tar
+    - docker save node:5.3.0 > ~/docker/node.tar
+    - docker save risaacson/gcd-local:v1beta2-rev1-3.0.2 > ~/docker/gcd.tar
 
 test:
   override:
