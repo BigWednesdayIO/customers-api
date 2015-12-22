@@ -8,14 +8,11 @@ const signToken = require('./sign_jwt');
 
 const adminToken = signToken({scope: ['admin']});
 
+const membershipParameters = require('./parameters/membership');
+
 describe('/customers/{customerId}/memberships/{membershipId}', () => {
   let customer;
   let validToken;
-
-  const createParams = {
-    supplier_id: 'supplier-a',
-    membership_number: 'mem-123'
-  };
 
   before(() => {
     return specRequest({
@@ -37,7 +34,7 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
       return specRequest({
         url: `/customers/${customer.id}/memberships`,
         method: 'POST',
-        payload: createParams,
+        payload: membershipParameters,
         headers: {authorization: validToken}
       })
       .then(response => {
@@ -117,16 +114,13 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
     let existingMembership;
     let updateResponse;
 
-    const updateParams = {
-      supplier_id: 'supplier-b',
-      membership_number: 'mem-456'
-    };
+    const updateParams = Object.assign({}, membershipParameters, {membership_number: 'mem-456'});
 
     before(() => {
       return specRequest({
         url: `/customers/${customer.id}/memberships`,
         method: 'POST',
-        payload: createParams,
+        payload: membershipParameters,
         headers: {authorization: validToken}
       })
       .then(response => {
@@ -258,7 +252,7 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
       return specRequest({
         url: `/customers/${customer.id}/memberships`,
         method: 'POST',
-        payload: createParams,
+        payload: membershipParameters,
         headers: {authorization: validToken}
       })
       .then(response => {
@@ -305,7 +299,7 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
         return specRequest({
           url: `/customers/${customer.id}/memberships`,
           method: 'POST',
-          payload: createParams,
+          payload: membershipParameters,
           headers: {authorization: validToken}
         })
         .then(response => {

@@ -9,6 +9,8 @@ const signToken = require('./sign_jwt');
 
 const adminToken = signToken({scope: ['admin']});
 
+const membershipParameters = require('./parameters/membership');
+
 const createCustomer = () => {
   return specRequest({
     url: '/customers',
@@ -23,10 +25,6 @@ const createCustomer = () => {
 
 describe('/customers/{id}/memberships', () => {
   describe('post', () => {
-    const createParams = {
-      supplier_id: 'supplier-a',
-      membership_number: 'mem-123'
-    };
     let customer;
     let createResponse;
 
@@ -37,7 +35,7 @@ describe('/customers/{id}/memberships', () => {
           return specRequest({
             url: `/customers/${customer.id}/memberships`,
             method: 'POST',
-            payload: createParams,
+            payload: membershipParameters,
             headers: {authorization: customer.token}
           });
         })
@@ -56,7 +54,7 @@ describe('/customers/{id}/memberships', () => {
     });
 
     it('returns membership resource', () => {
-      expect(_.omit(createResponse.result, ['id', '_metadata'])).to.eql(createParams);
+      expect(_.omit(createResponse.result, ['id', '_metadata'])).to.eql(membershipParameters);
       expect(createResponse.result.id).to.match(/^c.{24}/);
       expect(createResponse.result._metadata.created).to.be.instanceOf(Date);
     });
@@ -66,7 +64,7 @@ describe('/customers/{id}/memberships', () => {
       return specRequest({
         url: `/customers/${customer.id}/memberships`,
         method: 'POST',
-        payload: createParams,
+        payload: membershipParameters,
         headers: {authorization: otherUsersToken}
       })
       .then(response => {
@@ -80,7 +78,7 @@ describe('/customers/{id}/memberships', () => {
         return specRequest({
           url: `/customers/${customer.id}/memberships`,
           method: 'POST',
-          payload: createParams,
+          payload: membershipParameters,
           headers: {authorization: adminToken}
         })
         .then(response => {
@@ -92,10 +90,7 @@ describe('/customers/{id}/memberships', () => {
         return specRequest({
           url: `/customers/unknown_customer/memberships`,
           method: 'POST',
-          payload: {
-            supplier_id: 'sdfklsdjflksadjflksdjaflkjsadflksd',
-            membership_number: 'mem-123'
-          },
+          payload: membershipParameters,
           headers: {authorization: adminToken}
         })
         .then(response => {
@@ -110,7 +105,7 @@ describe('/customers/{id}/memberships', () => {
         return specRequest({
           url: `/customers/${customer.id}/memberships`,
           method: 'POST',
-          payload: _.omit(createParams, 'supplier_id'),
+          payload: _.omit(membershipParameters, 'supplier_id'),
           headers: {authorization: customer.token}
         })
         .then(response => {
@@ -123,7 +118,7 @@ describe('/customers/{id}/memberships', () => {
         return specRequest({
           url: `/customers/${customer.id}/memberships`,
           method: 'POST',
-          payload: _.omit(createParams, 'membership_number'),
+          payload: _.omit(membershipParameters, 'membership_number'),
           headers: {authorization: customer.token}
         })
         .then(response => {
@@ -136,9 +131,9 @@ describe('/customers/{id}/memberships', () => {
 
   describe('get', () => {
     const memberships = [
-      {supplier_id: 'supplier-a', membership_number: 'mem-123'},
-      {supplier_id: 'supplier-b', membership_number: 'mem-456'},
-      {supplier_id: 'supplier-c', membership_number: 'mem-789'}
+      Object.assign({}, membershipParameters, {supplier_id: 'supplier-a', membership_number: 'mem-123'}),
+      Object.assign({}, membershipParameters, {supplier_id: 'supplier-b', membership_number: 'mem-456'}),
+      Object.assign({}, membershipParameters, {supplier_id: 'supplier-c', membership_number: 'mem-789'})
     ];
     let customer;
     let getResponse;
