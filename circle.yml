@@ -13,7 +13,6 @@ dependencies:
     - '~/docker'
   override:
     - deploy_scripts/install_deployment_tools.sh
-    - sudo pip install -U docker-compose
     - if [[ -e ~/docker/node.tar ]]; then docker load -i ~/docker/node.tar; fi
     - if [[ -e ~/docker/gcd.tar ]]; then docker load -i ~/docker/gcd.tar; fi
     - docker pull node:5.3.0
