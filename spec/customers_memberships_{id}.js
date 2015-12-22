@@ -242,6 +242,19 @@ describe('/customers/{customerId}/memberships/{membershipId}', () => {
           expect(response.result).to.have.property('message', 'child "membership_number" fails because ["membership_number" is required]');
         });
       });
+
+      it('rejects request when price_adjustment_group_id is not a string', () => {
+        return specRequest({
+          url: `/customers/${customer.id}/memberships/${existingMembership.id}`,
+          method: 'PUT',
+          payload: Object.assign({}, updateParams, {price_adjustment_group_id: 1}),
+          headers: {authorization: validToken}
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result).to.have.property('message', 'child "price_adjustment_group_id" fails because ["price_adjustment_group_id" must be a string]');
+        });
+      });
     });
   });
 
