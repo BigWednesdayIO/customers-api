@@ -187,6 +187,18 @@ describe('/customers/{id}/memberships', () => {
       });
     });
 
+    it('gets the membership for a specific supplier', () =>
+      specRequest({
+        url: `/customers/${customer.id}/memberships?supplier_id=supplier-b`,
+        method: 'GET',
+        headers: {authorization: customer.token}
+      }).then(response => {
+        expect(response.statusCode).to.equal(200);
+        expect(response.result).to.be.an('array');
+        expect(response.result).to.have.length(1);
+        expect(_.omit(response.result[0], 'id', '_metadata')).to.deep.equal(memberships[1]);
+      }));
+
     describe('admin', () => {
       it('gets memberships for any customer', () => {
         return specRequest({
