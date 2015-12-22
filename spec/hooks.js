@@ -33,7 +33,8 @@ const deleteDataOfKind = kind => {
 };
 
 const deleteDataStoreData = () => {
-  return deleteDataOfKind('Membership')
+  return deleteDataOfKind('CustomerProductPriceAdjustment')
+    .then(() => deleteDataOfKind('Membership'))
     .then(() => deleteDataOfKind('Customer'));
 };
 
