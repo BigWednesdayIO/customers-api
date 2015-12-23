@@ -104,12 +104,15 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
   });
 
   describe('delete', () => {
+    let createdCustomerMembership;
     let deleteResponse;
     let getResponse;
 
     before(() =>
       createCustomerWithMembership()
         .then(customerMembership => {
+          createdCustomerMembership = customerMembership;
+
           return specRequest({
             url: `${customerMembership.uri}/product_price_adjustments`,
             method: 'POST',
@@ -158,9 +161,18 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
         expect(response.result).to.have.property('message',
           `Membership "notfound" not found for Customer "${getResponse.request.params.customerId}".`);
       }));
+
+    it('returns http 404 when adjustment does not exist', () =>
+      specRequest({
+        url: `${createdCustomerMembership.uri}/product_price_adjustments/notfound`,
+        method: 'DELETE',
+        headers: {authorization: createdCustomerMembership.token}
+      })
+      .then(response => expect(response.statusCode).to.equal(404)));
   });
 
   describe('put', () => {
+    let createdCustomerMembership;
     let createdAdjustment;
     let getResponse;
     let putResponse;
@@ -169,6 +181,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
     before(() =>
       createCustomerWithMembership()
         .then(customerMembership => {
+          createdCustomerMembership = customerMembership;
           return specRequest({
             url: `${customerMembership.uri}/product_price_adjustments`,
             method: 'POST',
@@ -241,5 +254,14 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
         expect(response.result).to.have.property('message',
           `Membership "notfound" not found for Customer "${getResponse.request.params.customerId}".`);
       }));
+
+    it('returns http 404 when adjustment does not exist', () =>
+      specRequest({
+        url: `${createdCustomerMembership.uri}/product_price_adjustments/notfound`,
+        method: 'PUT',
+        headers: {authorization: createdCustomerMembership.token},
+        payload: updateParameters
+      })
+      .then(response => expect(response.statusCode).to.equal(404)));
   });
 });
