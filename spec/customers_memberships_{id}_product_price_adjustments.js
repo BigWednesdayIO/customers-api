@@ -21,7 +21,7 @@ const createCustomerWithMembership = () => {
       payload: require('./parameters/membership'),
       headers: {authorization: token}
     }).then(membershipResponse => ({
-      membershipUri: membershipResponse.headers.location,
+      uri: membershipResponse.headers.location,
       token
     }));
   });
@@ -32,19 +32,15 @@ const payload = {product_id: 'product1', type: 'value_adjustment', amount: 15};
 describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
   describe('post', () => {
     let createResponse;
-    let membershipUri;
 
     before(() =>
       createCustomerWithMembership()
-        .then(result => {
-          membershipUri = result.membershipUri;
-          return specRequest({
-            url: `${result.membershipUri}/product_price_adjustments`,
-            method: 'POST',
-            headers: {authorization: result.token},
-            payload
-          });
-        })
+        .then(customerMembership => specRequest({
+          url: `${customerMembership.uri}/product_price_adjustments`,
+          method: 'POST',
+          headers: {authorization: customerMembership.token},
+          payload
+        }))
         .then(response => createResponse = response));
 
     it('returns http 201', () =>
@@ -68,6 +64,83 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
     });
 
     it('returns the location of the created resource', () =>
-      expect(createResponse.headers.location).to.equal(`${membershipUri}/product_price_adjustments/${createResponse.result.id}`));
+      expect(createResponse.headers.location).to.equal(`${createResponse.request.url.path}/${createResponse.result.id}`));
+  });
+
+  describe('get', () => {
+    const createdAdjustments = [];
+    let getResponse;
+    let createdCustomerMembership;
+    const payload2 = Object.assign({}, payload, {product_id: 'product2'});
+
+    before(() =>
+      createCustomerWithMembership()
+        .then(customerMembership => {
+          createdCustomerMembership = customerMembership;
+
+          return specRequest({
+            url: `${customerMembership.uri}/product_price_adjustments`,
+            method: 'POST',
+            headers: {authorization: customerMembership.token},
+            payload
+          })
+          .then(response => {
+            createdAdjustments.push(response.result);
+
+            return specRequest({
+              url: `${customerMembership.uri}/product_price_adjustments`,
+              method: 'POST',
+              headers: {authorization: customerMembership.token},
+              payload: payload2
+            });
+          })
+          .then(response => {
+            createdAdjustments.push(response.result);
+
+            return specRequest({
+              url: `${customerMembership.uri}/product_price_adjustments`,
+              method: 'GET',
+              headers: {authorization: customerMembership.token}
+            });
+          });
+        })
+        .then(response => getResponse = response));
+
+    it('returns http 200', () => expect(getResponse.statusCode).to.equal(200));
+
+    it('returns all adjustments for the membership', () => {
+      expect(getResponse.result).to.be.an('array');
+      expect(getResponse.result).to.have.length(createdAdjustments.length);
+    });
+
+    it('returns the ids', () =>
+      getResponse.result.forEach((adjustment, index) => expect(adjustment).to.have.property('id', createdAdjustments[index].id)));
+
+    it('returns the created and updated dates', () =>
+      getResponse.result.forEach((adjustment, index) => {
+        expect(adjustment).to.have.property('_metadata');
+        expect(adjustment._metadata).to.have.property('created');
+        expect(adjustment._metadata).to.have.property('updated');
+        expect(adjustment._metadata.created).to.deep.equal(createdAdjustments[index]._metadata.created);
+        expect(adjustment._metadata.updated).to.deep.equal(createdAdjustments[index]._metadata.updated);
+      }));
+
+    it('returns the resource attributes', () => {
+      expect(_.omit(getResponse.result[0], 'id', '_metadata')).to.deep.equal(payload);
+      expect(_.omit(getResponse.result[1], 'id', '_metadata')).to.deep.equal(payload2);
+    });
+
+    it('gets the price adjustment for a specific product', () =>
+      specRequest({
+        url: `${createdCustomerMembership.uri}/product_price_adjustments?product_id=product2`,
+        method: 'GET',
+        headers: {authorization: createdCustomerMembership.token}
+      })
+      .then(response => {
+        expect(response.statusCode).to.equal(200);
+        expect(response.result).to.be.an('array');
+        expect(response.result).to.have.length(1);
+        expect(_.omit(response.result[0], 'id', '_metadata')).to.deep.equal(payload2);
+      }));
   });
 });
