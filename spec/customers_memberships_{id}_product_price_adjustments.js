@@ -70,11 +70,23 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
       specRequest({
         url: '/customers/notfound/memberships/1/product_price_adjustments',
         method: 'POST',
-        headers: {authorization: signToken({scope: [`customer:notfound`]})},
+        headers: {authorization: signToken({scope: ['customer:notfound']})},
         payload: parameters
       }).then(response => {
         expect(response.statusCode).to.equal(404);
         expect(response.result).to.have.property('message', 'Customer "notfound" not found.');
+      }));
+
+    it('returns http 404 for unknown memberships', () =>
+      specRequest({
+        url: `/customers/${createResponse.request.params.customerId}/memberships/notfound/product_price_adjustments`,
+        method: 'POST',
+        headers: {authorization: signToken({scope: [`customer:${createResponse.request.params.customerId}`]})},
+        payload: parameters
+      }).then(response => {
+        expect(response.statusCode).to.equal(404);
+        expect(response.result).to.have.property('message',
+          `Membership "notfound" not found for Customer "${createResponse.request.params.customerId}".`);
       }));
   });
 
@@ -156,12 +168,23 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
 
     it('returns http 404 for unknown customers', () =>
       specRequest({
-        url: '/customers/notfound/memberships/1/product_price_adjustments',
+        url: `/customers/notfound/memberships/1/product_price_adjustments`,
         method: 'GET',
         headers: {authorization: signToken({scope: [`customer:notfound`]})}
       }).then(response => {
         expect(response.statusCode).to.equal(404);
         expect(response.result).to.have.property('message', 'Customer "notfound" not found.');
+      }));
+
+    it('returns http 404 for unknown memberships', () =>
+      specRequest({
+        url: `/customers/${getResponse.request.params.customerId}/memberships/notfound/product_price_adjustments`,
+        method: 'GET',
+        headers: {authorization: signToken({scope: [`customer:${getResponse.request.params.customerId}`]})}
+      }).then(response => {
+        expect(response.statusCode).to.equal(404);
+        expect(response.result).to.have.property('message',
+          `Membership "notfound" not found for Customer "${getResponse.request.params.customerId}".`);
       }));
   });
 });
