@@ -7,6 +7,8 @@ const expect = require('chai').expect;
 const signToken = require('./sign_jwt');
 const specRequest = require('./spec_request');
 
+const parameters = require('./parameters/product_price_adjustment');
+
 const createCustomerWithMembership = () => {
   return specRequest({
     url: '/customers',
@@ -27,8 +29,6 @@ const createCustomerWithMembership = () => {
   });
 };
 
-const payload = {product_id: 'product1', type: 'value_adjustment', amount: 15};
-
 describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
   describe('post', () => {
     let createResponse;
@@ -39,7 +39,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
           url: `${customerMembership.uri}/product_price_adjustments`,
           method: 'POST',
           headers: {authorization: customerMembership.token},
-          payload
+          payload: parameters
         }))
         .then(response => createResponse = response));
 
@@ -60,7 +60,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
     });
 
     it('returns the resource attributes', () => {
-      expect(_.omit(createResponse.result, 'id', '_metadata')).to.deep.equal(payload);
+      expect(_.omit(createResponse.result, 'id', '_metadata')).to.deep.equal(parameters);
     });
 
     it('returns the location of the created resource', () =>
@@ -71,7 +71,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
     const createdAdjustments = [];
     let getResponse;
     let createdCustomerMembership;
-    const payload2 = Object.assign({}, payload, {product_id: 'product2'});
+    const payload2 = Object.assign({}, parameters, {product_id: 'product2'});
 
     before(() =>
       createCustomerWithMembership()
@@ -82,7 +82,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
             url: `${customerMembership.uri}/product_price_adjustments`,
             method: 'POST',
             headers: {authorization: customerMembership.token},
-            payload
+            payload: parameters
           })
           .then(response => {
             createdAdjustments.push(response.result);
@@ -126,7 +126,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
       }));
 
     it('returns the resource attributes', () => {
-      expect(_.omit(getResponse.result[0], 'id', '_metadata')).to.deep.equal(payload);
+      expect(_.omit(getResponse.result[0], 'id', '_metadata')).to.deep.equal(parameters);
       expect(_.omit(getResponse.result[1], 'id', '_metadata')).to.deep.equal(payload2);
     });
 
