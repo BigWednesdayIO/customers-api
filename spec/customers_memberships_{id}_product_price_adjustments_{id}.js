@@ -31,12 +31,15 @@ const createCustomerWithMembership = () => {
 
 describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () => {
   describe('get', () => {
+    let createdCustomerMembership;
     let createdAdjustment;
     let getResponse;
 
     before(() =>
       createCustomerWithMembership()
         .then(customerMembership => {
+          createdCustomerMembership = customerMembership;
+
           return specRequest({
             url: `${customerMembership.uri}/product_price_adjustments`,
             method: 'POST',
@@ -69,5 +72,49 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
 
     it('returns the resource attributes', () =>
       expect(_.omit(getResponse.result, 'id', '_metadata')).to.deep.equal(parameters));
+
+    it('returns http 404 when adjustment does not exist', () =>
+      specRequest({
+        url: `${createdCustomerMembership.uri}/product_price_adjustments/notfound`,
+        method: 'GET',
+        headers: {authorization: createdCustomerMembership.token}
+      })
+      .then(response => expect(response.statusCode).to.equal(404)));
+  });
+
+  describe('delete', () => {
+    let deleteResponse;
+    let getResponse;
+
+    before(() =>
+      createCustomerWithMembership()
+        .then(customerMembership => {
+          return specRequest({
+            url: `${customerMembership.uri}/product_price_adjustments`,
+            method: 'POST',
+            headers: {authorization: customerMembership.token},
+            payload: parameters
+          })
+          .then(createResponse =>
+            specRequest({
+              url: createResponse.headers.location,
+              method: 'DELETE',
+              headers: {authorization: customerMembership.token}
+            })
+            .then(response => {
+              deleteResponse = response;
+
+              return specRequest({
+                url: createResponse.headers.location,
+                method: 'GET',
+                headers: {authorization: customerMembership.token}
+              });
+            })
+            .then(response => getResponse = response));
+        }));
+
+    it('returns http 204', () => expect(deleteResponse.statusCode).to.equal(204));
+
+    it('deletes the resource', () => expect(getResponse.statusCode).to.equal(404));
   });
 });
