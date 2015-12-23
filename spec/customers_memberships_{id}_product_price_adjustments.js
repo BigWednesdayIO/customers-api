@@ -65,6 +65,17 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
 
     it('returns the location of the created resource', () =>
       expect(createResponse.headers.location).to.equal(`${createResponse.request.url.path}/${createResponse.result.id}`));
+
+    it('returns http 404 for unknown customers', () =>
+      specRequest({
+        url: '/customers/notfound/memberships/1/product_price_adjustments',
+        method: 'POST',
+        headers: {authorization: signToken({scope: [`customer:notfound`]})},
+        payload: parameters
+      }).then(response => {
+        expect(response.statusCode).to.equal(404);
+        expect(response.result).to.have.property('message', 'Customer "notfound" not found.');
+      }));
   });
 
   describe('get', () => {
@@ -141,6 +152,16 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
         expect(response.result).to.be.an('array');
         expect(response.result).to.have.length(1);
         expect(_.omit(response.result[0], 'id', '_metadata')).to.deep.equal(payload2);
+      }));
+
+    it('returns http 404 for unknown customers', () =>
+      specRequest({
+        url: '/customers/notfound/memberships/1/product_price_adjustments',
+        method: 'GET',
+        headers: {authorization: signToken({scope: [`customer:notfound`]})}
+      }).then(response => {
+        expect(response.statusCode).to.equal(404);
+        expect(response.result).to.have.property('message', 'Customer "notfound" not found.');
       }));
   });
 });

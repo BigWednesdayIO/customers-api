@@ -80,6 +80,16 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
         headers: {authorization: createdCustomerMembership.token}
       })
       .then(response => expect(response.statusCode).to.equal(404)));
+
+    it('returns http 404 for unknown customers', () =>
+      specRequest({
+        url: '/customers/notfound/memberships/1/product_price_adjustments/1',
+        method: 'GET',
+        headers: {authorization: signToken({scope: [`customer:notfound`]})}
+      }).then(response => {
+        expect(response.statusCode).to.equal(404);
+        expect(response.result).to.have.property('message', 'Customer "notfound" not found.');
+      }));
   });
 
   describe('delete', () => {
@@ -116,6 +126,16 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
     it('returns http 204', () => expect(deleteResponse.statusCode).to.equal(204));
 
     it('deletes the resource', () => expect(getResponse.statusCode).to.equal(404));
+
+    it('returns http 404 for unknown customers', () =>
+      specRequest({
+        url: '/customers/notfound/memberships/1/product_price_adjustments/1',
+        method: 'DELETE',
+        headers: {authorization: signToken({scope: [`customer:notfound`]})}
+      }).then(response => {
+        expect(response.statusCode).to.equal(404);
+        expect(response.result).to.have.property('message', 'Customer "notfound" not found.');
+      }));
   });
 
   describe('put', () => {
@@ -176,5 +196,16 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
       expect(_.omit(putResponse.result, 'id', '_metadata')).to.deep.equal(updateParameters));
 
     it('updates the resource', () => expect(getResponse.result).to.deep.equal(putResponse.result));
+
+    it('returns http 404 for unknown customers', () =>
+      specRequest({
+        url: '/customers/notfound/memberships/1/product_price_adjustments/1',
+        method: 'PUT',
+        headers: {authorization: signToken({scope: [`customer:notfound`]})},
+        payload: updateParameters
+      }).then(response => {
+        expect(response.statusCode).to.equal(404);
+        expect(response.result).to.have.property('message', 'Customer "notfound" not found.');
+      }));
   });
 });
