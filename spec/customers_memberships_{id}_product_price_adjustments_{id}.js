@@ -117,4 +117,64 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
 
     it('deletes the resource', () => expect(getResponse.statusCode).to.equal(404));
   });
+
+  describe('put', () => {
+    let createdAdjustment;
+    let getResponse;
+    let putResponse;
+    const updateParameters = Object.assign({}, parameters, {amount: 200});
+
+    before(() =>
+      createCustomerWithMembership()
+        .then(customerMembership => {
+          return specRequest({
+            url: `${customerMembership.uri}/product_price_adjustments`,
+            method: 'POST',
+            headers: {authorization: customerMembership.token},
+            payload: parameters
+          })
+          .then(createResponse => {
+            createdAdjustment = createResponse.result;
+
+            return specRequest({
+              url: createResponse.headers.location,
+              method: 'PUT',
+              headers: {authorization: customerMembership.token},
+              payload: updateParameters
+            })
+            .then(response => {
+              putResponse = response;
+
+              return specRequest({
+                url: createResponse.headers.location,
+                method: 'GET',
+                headers: {authorization: customerMembership.token}
+              });
+            })
+            .then(response => getResponse = response);
+          });
+        }));
+
+    it('returns http 200', () => expect(putResponse.statusCode).to.equal(200));
+
+    it('returns id', () => expect(putResponse.result).to.have.property('id', createdAdjustment.id));
+
+    it('returns the original created date', () => {
+      expect(putResponse.result).to.have.property('_metadata');
+      expect(putResponse.result._metadata).to.have.property('created');
+      expect(putResponse.result._metadata.created).to.deep.equal(createdAdjustment._metadata.created);
+    });
+
+    it('returns a new updated date', () => {
+      expect(putResponse.result).to.have.property('_metadata');
+      expect(putResponse.result._metadata).to.have.property('updated');
+      expect(putResponse.result._metadata.updated).to.be.a('date');
+      expect(putResponse.result._metadata.updated.toISOString()).to.be.above(createdAdjustment._metadata.updated.toISOString());
+    });
+
+    it('returns the updated resource attributes', () =>
+      expect(_.omit(putResponse.result, 'id', '_metadata')).to.deep.equal(updateParameters));
+
+    it('updates the resource', () => expect(getResponse.result).to.deep.equal(putResponse.result));
+  });
 });
