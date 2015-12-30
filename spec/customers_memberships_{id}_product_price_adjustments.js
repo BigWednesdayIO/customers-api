@@ -43,8 +43,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
         }))
         .then(response => createResponse = response));
 
-    it('returns http 201', () =>
-      expect(createResponse.statusCode).to.equal(201));
+    it('returns http 201', () => expect(createResponse.statusCode).to.equal(201));
 
     it('returns the generated id', () => {
       expect(createResponse.result).to.have.property('id');
