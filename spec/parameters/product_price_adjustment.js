@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-  product_id: 'product1',
+  linked_product_id: 'product1',
   type: 'value_adjustment',
   amount: 15,
   start_date: new Date(),

@@ -12,7 +12,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments - payload v
     describe(method, () => {
       const uri = `/customers/1/memberships/1/product_price_adjustments${method === 'put' ? '/1' : ''}`;
 
-      ['product_id', 'type', 'amount', 'start_date'].forEach(attribute => {
+      ['linked_product_id', 'type', 'amount', 'start_date'].forEach(attribute => {
         it(`requires the ${attribute} attribute`, () =>
           specRequest({
             url: uri,
@@ -26,7 +26,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments - payload v
           }));
       });
 
-      ['product_id', 'type'].forEach(attribute => {
+      ['linked_product_id', 'type'].forEach(attribute => {
         it(`validates that the ${attribute} attribute is a string`, () =>
           specRequest({
             url: uri,
