@@ -89,11 +89,13 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
       }));
   });
 
-  describe('get', () => {
+  describe('get', function () {
+    this.timeout(5000);
+
     const createdAdjustments = [];
     let getResponse;
     let createdCustomerMembership;
-    const payload2 = Object.assign({}, parameters, {product_id: 'product2'});
+    const payload2 = Object.assign({}, parameters, {linked_product_id: 'product2'});
 
     before(() =>
       createCustomerWithMembership()
@@ -154,7 +156,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
 
     it('gets the price adjustment for a specific product', () =>
       specRequest({
-        url: `${createdCustomerMembership.uri}/product_price_adjustments?product_id=product2`,
+        url: `${createdCustomerMembership.uri}/product_price_adjustments?linked_product_id=product2`,
         method: 'GET',
         headers: {authorization: createdCustomerMembership.token}
       })
