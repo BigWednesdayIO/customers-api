@@ -89,7 +89,9 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments', () => {
       }));
   });
 
-  describe('get', () => {
+  describe('get', function () {
+    this.timeout(5000);
+
     const createdAdjustments = [];
     let getResponse;
     let createdCustomerMembership;

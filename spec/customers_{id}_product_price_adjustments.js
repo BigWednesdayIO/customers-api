@@ -41,7 +41,9 @@ const testMemberships = [
 ];
 
 describe('/customers/{id}/product_price_adjustments', () => {
-  describe('get', () => {
+  describe('get', function () {
+    this.timeout(5000);
+
     let getResponse;
 
     before(() =>
