@@ -45,6 +45,7 @@ describe('/customers/{id}/product_price_adjustments', () => {
     this.timeout(5000);
 
     let getResponse;
+    const membershipIds = [];
 
     before(() =>
       specRequest({
@@ -61,13 +62,17 @@ describe('/customers/{id}/product_price_adjustments', () => {
             payload: m.membership,
             headers: {authorization: token}
           })
-          .then(membershipResponse => bluebird.mapSeries(m.price_adjustments, a =>
-            specRequest({
-              url: `${membershipResponse.headers.location}/product_price_adjustments`,
-              method: 'POST',
-              payload: a,
-              headers: {authorization: token}
-            })))
+          .then(membershipResponse => {
+            membershipIds.push(membershipResponse.result.id);
+
+            return bluebird.mapSeries(m.price_adjustments, a =>
+              specRequest({
+                url: `${membershipResponse.headers.location}/product_price_adjustments`,
+                method: 'POST',
+                payload: a,
+                headers: {authorization: token}
+              }));
+          })
           .then(() =>
             specRequest({
               url: `/customers/${customerResponse.result.id}/product_price_adjustments?date=${testDate.toISOString()}`,
@@ -91,6 +96,14 @@ describe('/customers/{id}/product_price_adjustments', () => {
       ];
 
       expect(getResponse.result.map(a => _.omit(a, 'id', '_metadata'))).to.deep.equal(activeAdjustments);
+    });
+
+    it('returns the adjustment membership_id as metadata', () => {
+      const returnedMembershipIds = getResponse.result.map(a => a._metadata.membership_id);
+
+      expect(_.uniq(returnedMembershipIds.slice(0, 1))).to.deep.equal([membershipIds[0]]);
+      expect(_.uniq(returnedMembershipIds.slice(1, 3))).to.deep.equal([membershipIds[1]]);
+      expect(_.uniq(returnedMembershipIds.slice(4, 6))).to.deep.equal([membershipIds[2]]);
     });
 
     it('returns http 404 for unknown customers', () =>
