@@ -238,6 +238,18 @@ describe('/customers/{id}', () => {
           expect(response.result.message).to.equal('"_metadata" is not allowed');
         });
       });
+
+      it('allows address', () => {
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'PUT',
+          payload: Object.assign({address: {name: 'foo', company: 'bar', line_1: 'here', city: 'there', postcode: 'baz'}}, updateCustomerPayload),
+          headers: {authorization: validToken}
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(200);
+        });
+      });
     });
   });
 });
