@@ -240,7 +240,7 @@ describe('/customers/{id}', () => {
       });
 
       describe('addresses', () => {
-        let addressObject = {
+        const addressObject = {
           name: 'foo',
           company: 'bar',
           line_1: 'here',
