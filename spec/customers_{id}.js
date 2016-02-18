@@ -239,11 +239,11 @@ describe('/customers/{id}', () => {
         });
       });
 
-      it('allows address', () => {
+      it('allows addresses', () => {
         return specRequest({
           url: createResponse.headers.location,
           method: 'PUT',
-          payload: Object.assign({address: {name: 'foo', company: 'bar', line_1: 'here', city: 'there', postcode: 'baz'}}, updateCustomerPayload),
+          payload: Object.assign({addresses: [{name: 'foo', company: 'bar', line_1: 'here', city: 'there', postcode: 'baz'}]}, updateCustomerPayload),
           headers: {authorization: validToken}
         })
         .then(response => {
