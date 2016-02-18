@@ -239,15 +239,49 @@ describe('/customers/{id}', () => {
         });
       });
 
-      it('allows addresses', () => {
-        return specRequest({
-          url: createResponse.headers.location,
-          method: 'PUT',
-          payload: Object.assign({addresses: [{name: 'foo', company: 'bar', line_1: 'here', city: 'there', postcode: 'baz'}]}, updateCustomerPayload),
-          headers: {authorization: validToken}
-        })
-        .then(response => {
-          expect(response.statusCode).to.equal(200);
+      describe('addresses', () => {
+        let addressObject = {
+          name: 'foo',
+          company: 'bar',
+          line_1: 'here',
+          city: 'there',
+          postcode: 'baz'
+        };
+
+        it('allows one', () => {
+          return specRequest({
+            url: createResponse.headers.location,
+            method: 'PUT',
+            payload: Object.assign({addresses: [addressObject]}, updateCustomerPayload),
+            headers: {authorization: validToken}
+          })
+          .then(response => {
+            expect(response.statusCode).to.equal(200);
+          });
+        });
+
+        it('allows multiple', () => {
+          return specRequest({
+            url: createResponse.headers.location,
+            method: 'PUT',
+            payload: Object.assign({addresses: [addressObject, addressObject]}, updateCustomerPayload),
+            headers: {authorization: validToken}
+          })
+          .then(response => {
+            expect(response.statusCode).to.equal(200);
+          });
+        });
+
+        it('requires a complete address', () => {
+          return specRequest({
+            url: createResponse.headers.location,
+            method: 'PUT',
+            payload: Object.assign({addresses: [{name: 'foo', postcode: 'bar'}]}, updateCustomerPayload),
+            headers: {authorization: validToken}
+          })
+          .then(response => {
+            expect(response.statusCode).to.equal(400);
+          });
         });
       });
     });
