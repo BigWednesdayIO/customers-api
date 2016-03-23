@@ -11,7 +11,8 @@ describe('/customers', () => {
       email: `test-${cuid()}@bigwednesday.io`,
       password: '8u{F0*W1l5',
       vat_number: 'YNG675',
-      line_of_business: 'Eating & Drinking Out'
+      line_of_business: 'Eating & Drinking Out',
+      default_sign_for: true
     };
     let createUserResponse;
 
@@ -105,6 +106,18 @@ describe('/customers', () => {
         .then(response => {
           expect(response.statusCode).to.equal(400);
           expect(response.result.message).to.equal('child "password" fails because ["password" is required]');
+        });
+      });
+
+      it('default_sign_for requ a boolean', () => {
+        return specRequest({
+          url: '/customers',
+          method: 'POST',
+          payload: _.defaults({default_sign_for: 'yes'}, customerParams)
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result.message).to.equal('child "default_sign_for" fails because ["default_sign_for" must be a boolean]');
         });
       });
     });
