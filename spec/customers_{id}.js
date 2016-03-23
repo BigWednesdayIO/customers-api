@@ -13,7 +13,8 @@ describe('/customers/{id}', () => {
     email: `test-${cuid()}@bigwednesday.io`,
     password: '8u{F0*W1l5',
     vat_number: '12345',
-    line_of_business: 'Eating & Drinking Out'
+    line_of_business: 'Eating & Drinking Out',
+    default_sign_for: true
   });
 
   describe('get', () => {
@@ -236,6 +237,19 @@ describe('/customers/{id}', () => {
         .then(response => {
           expect(response.statusCode).to.equal(400);
           expect(response.result.message).to.equal('"_metadata" is not allowed');
+        });
+      });
+
+      it('requires default_sign_for to be boolean', () => {
+        return specRequest({
+          url: createResponse.headers.location,
+          method: 'PUT',
+          payload: Object.assign({default_sign_for: 'a string'}, updateCustomerPayload),
+          headers: {authorization: validToken}
+        })
+        .then(response => {
+          expect(response.statusCode).to.equal(400);
+          expect(response.result.message).to.equal('child "default_sign_for" fails because ["default_sign_for" must be a boolean]');
         });
       });
 

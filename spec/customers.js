@@ -11,13 +11,12 @@ describe('/customers', () => {
       email: `test-${cuid()}@bigwednesday.io`,
       password: '8u{F0*W1l5',
       vat_number: 'YNG675',
-      line_of_business: 'Eating & Drinking Out'
+      line_of_business: 'Eating & Drinking Out',
+      default_sign_for: true
     };
     let createUserResponse;
 
-    before(function () {
-      this.timeout(5000);
-
+    before(() => {
       return specRequest({
         url: '/customers',
         method: 'POST',
