@@ -108,18 +108,6 @@ describe('/customers', () => {
           expect(response.result.message).to.equal('child "password" fails because ["password" is required]');
         });
       });
-
-      it('default_sign_for requires a boolean', () => {
-        return specRequest({
-          url: '/customers',
-          method: 'POST',
-          payload: {email: `test-${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5', default_sign_for: 'yes'}
-        })
-        .then(response => {
-          expect(response.statusCode).to.equal(400);
-          expect(response.result.message).to.equal('child "default_sign_for" fails because ["default_sign_for" must be a boolean]');
-        });
-      });
     });
   });
 });
