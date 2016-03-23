@@ -113,10 +113,7 @@ describe('/customers', () => {
         return specRequest({
           url: '/customers',
           method: 'POST',
-          payload: _.defaults({
-            email: 'text-2@bigwednesday.io',
-            default_sign_for: 'yes'
-          }, customerParams)
+          payload: {email: `test-${cuid()}@bigwednesday.io`, password: '8u{F0*W1l5', default_sign_for: 'yes'}
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
