@@ -109,11 +109,14 @@ describe('/customers', () => {
         });
       });
 
-      it('default_sign_for requ a boolean', () => {
+      it('default_sign_for requires a boolean', () => {
         return specRequest({
           url: '/customers',
           method: 'POST',
-          payload: _.defaults({default_sign_for: 'yes'}, customerParams)
+          payload: _.defaults({
+            email: 'text-2@bigwednesday.io',
+            default_sign_for: 'yes'
+          }, customerParams)
         })
         .then(response => {
           expect(response.statusCode).to.equal(400);
