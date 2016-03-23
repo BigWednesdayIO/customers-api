@@ -244,7 +244,7 @@ describe('/customers/{id}', () => {
         return specRequest({
           url: createResponse.headers.location,
           method: 'PUT',
-          payload: Object.assign({default_sign_for: 'yes'}, updateCustomerPayload),
+          payload: Object.assign({default_sign_for: 'a string'}, updateCustomerPayload),
           headers: {authorization: validToken}
         })
         .then(response => {

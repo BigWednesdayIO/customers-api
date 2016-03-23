@@ -171,9 +171,7 @@ describe('/customers/{id}/memberships/{id}/product_price_adjustments/{id}', () =
       .then(response => expect(response.statusCode).to.equal(404)));
   });
 
-  describe('put', function () {
-    this.timeout(5000);
-
+  describe('put', () => {
     let createdCustomerMembership;
     let createdAdjustment;
     let getResponse;

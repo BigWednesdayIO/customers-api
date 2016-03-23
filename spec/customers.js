@@ -16,9 +16,7 @@ describe('/customers', () => {
     };
     let createUserResponse;
 
-    before(function () {
-      this.timeout(5000);
-
+    before(() => {
       return specRequest({
         url: '/customers',
         method: 'POST',

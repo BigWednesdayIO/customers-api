@@ -41,9 +41,7 @@ const testMemberships = [
 ];
 
 describe('/customers/{id}/product_price_adjustments', () => {
-  describe('get', function () {
-    this.timeout(5000);
-
+  describe('get', () => {
     let getResponse;
     const membershipIds = [];
 
